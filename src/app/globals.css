@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-gw-green: #227038;
+  --color-gw-green-light: #2a8a45;
+  --color-gw-green-dark: #1a5a2c;
+  --color-gw-blue: #124682;
+  --color-gw-blue-light: #1a5a9e;
+  --color-gw-orange: #f28321;
+  --color-gw-orange-light: #f59a4a;
+  --color-cream: #fdfcfa;
+  --color-warm-gray: #f5f4f2;
+  --font-heading: var(--font-spartan);
+  --font-body: var(--font-source-sans);
+}
+
+:root {
+  --gw-green: #227038;
+  --gw-blue: #124682;
+  --gw-orange: #f28321;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  background: var(--color-cream);
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px rgba(34, 112, 56, 0.06);
+}
+
+/* Gradient text */
+.gradient-text-green {
+  background: linear-gradient(135deg, #227038 0%, #2a8a45 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Heading font */
+.font-heading {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f5f4f2;
+}
+::-webkit-scrollbar-thumb {
+  background: #bbd4c4;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #227038;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
