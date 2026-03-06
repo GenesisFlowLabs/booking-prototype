@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useBookingStore } from "@/store/booking";
 import { StepIndicator } from "./StepIndicator";
 import { ServiceTypeStep } from "./ServiceTypeStep";
-import { AddressStep } from "./AddressStep";
 import { PackageStep } from "./PackageStep";
 import { SchedulerStep } from "./SchedulerStep";
 import { ConfirmationStep } from "./ConfirmationStep";
@@ -34,12 +33,10 @@ export function BookingFlow() {
       case 1:
         return <ServiceTypeStep />;
       case 2:
-        return <AddressStep />;
-      case 3:
         return <PackageStep />;
-      case 4:
+      case 3:
         return <SchedulerStep />;
-      case 5:
+      case 4:
         return <ConfirmationStep />;
       default:
         return <ServiceTypeStep />;

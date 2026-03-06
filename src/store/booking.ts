@@ -12,7 +12,7 @@ export const useBookingStore = create<BookingState>((set) => ({
   callbackName: "",
 
   setStep: (step) => set({ currentStep: step }),
-  nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, 5) })),
+  nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, 4) })),
   prevStep: () => set((s) => ({ currentStep: Math.max(s.currentStep - 1, 1) })),
   setServiceType: (type) => set({ serviceType: type }),
   setAddress: (address) =>

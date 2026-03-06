@@ -25,11 +25,11 @@ export function ConfirmationStep() {
   const pkg = packages.find((p) => p.id === selectedPackage);
 
   const timelineSteps = [
-    { icon: CheckCircle2, label: "Booking confirmed", detail: "You're all set" },
+    { icon: CheckCircle2, label: "Booking confirmed", detail: "You'll receive a text confirmation" },
     {
       icon: FileText,
       label: "Pre-inspection prep",
-      detail: "Checklist emailed to you",
+      detail: "Checklist sent to you",
     },
     {
       icon: Wrench,
@@ -78,15 +78,15 @@ export function ConfirmationStep() {
           </div>
         </div>
 
-        {/* Address */}
+        {/* Area */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gw-blue/10 flex items-center justify-center">
             <MapPin className="w-5 h-5 text-gw-blue" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">PROPERTY</p>
+            <p className="text-xs text-gray-400 font-medium">SERVICE AREA</p>
             <p className="font-semibold text-gray-900">
-              {address.street}, {address.city}, {address.state} {address.zip}
+              {address.zip}{address.state ? `, ${address.state}` : ""}
             </p>
           </div>
         </div>
@@ -162,11 +162,11 @@ export function ConfirmationStep() {
           Back
         </Button>
         <a
-          href="tel:8553496757"
+          href="sms:8553496757&body=Hi%2C%20I%20just%20booked%20an%20inspection%20and%20would%20like%20to%20confirm."
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-md"
         >
           <Phone className="w-5 h-5" />
-          Call to Confirm — (855) 349-6757
+          Text to Confirm — (855) 349-6757
         </a>
       </div>
 

@@ -5,10 +5,9 @@ import { Check } from "lucide-react";
 
 const steps = [
   { num: 1, label: "Service" },
-  { num: 2, label: "Address" },
-  { num: 3, label: "Package" },
-  { num: 4, label: "Schedule" },
-  { num: 5, label: "Confirm" },
+  { num: 2, label: "Package" },
+  { num: 3, label: "Schedule" },
+  { num: 4, label: "Confirm" },
 ];
 
 interface StepIndicatorProps {
