@@ -1,0 +1,16 @@
+services:
+  greenworks-booking:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY}
+    container_name: greenworks-booking
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
