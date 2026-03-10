@@ -95,6 +95,7 @@ export function PackageStep() {
                       <div className="font-heading font-bold text-gray-900">
                         {pkg.name}
                       </div>
+                      <div className="text-sm text-gray-400">Starting at</div>
                       <div className="text-lg font-bold text-gw-green">
                         ${pkg.price.toLocaleString()}
                       </div>

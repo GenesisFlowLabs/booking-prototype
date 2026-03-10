@@ -54,6 +54,31 @@ export const serviceAreas: ServiceArea[] = [
   },
 ];
 
+// Map metro names to ISN inspector market tags found in inspector names
+export const metroToISNTag: Record<string, string[]> = {
+  "Dallas-Fort Worth": ["DFW"],
+  "Houston": ["HOU"],
+  "Austin": ["ATX", "SA/ATX"],
+  "San Antonio": ["SA", "SA/ATX"],
+  "Denver Metro": ["COL"],
+  "Colorado Springs": ["COL"],
+  "Orlando": ["FLA"],
+  "Tampa": ["FLA"],
+  "Jacksonville": ["FLA"],
+  "Atlanta Metro": ["ATL"],
+  "Columbus": ["OH"],
+  "Cincinnati": ["OH"],
+  "Cleveland": ["OH"],
+  "Oklahoma City": ["OKC"],
+  "Tulsa": ["OKC"],
+};
+
+export function getISNMarketTags(zip: string): string[] | null {
+  const result = validateZip(zip);
+  if (!result.valid || !result.metro) return null;
+  return metroToISNTag[result.metro] || null;
+}
+
 export function validateZip(zip: string): { valid: boolean; metro?: string; state?: string } {
   const zipNum = parseInt(zip, 10);
   if (isNaN(zipNum) || zip.length !== 5) {

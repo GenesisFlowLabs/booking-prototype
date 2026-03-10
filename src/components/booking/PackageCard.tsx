@@ -73,6 +73,15 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
 
       {/* Price */}
       <div className="mt-4 mb-5">
+        {pkg.priceNote === "starting at" && (
+          <span
+            className={`text-xs font-medium block mb-0.5 ${
+              selected ? "text-green-200" : "text-gray-400"
+            }`}
+          >
+            Starting at
+          </span>
+        )}
         <span
           className={`text-3xl md:text-4xl font-heading font-bold ${
             selected ? "text-white" : "gradient-text-green"
@@ -80,7 +89,7 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
         >
           ${pkg.price.toLocaleString()}
         </span>
-        {pkg.priceNote && (
+        {pkg.priceNote && pkg.priceNote !== "starting at" && (
           <span
             className={`text-xs ml-2 ${
               selected ? "text-green-200" : "text-gray-400"

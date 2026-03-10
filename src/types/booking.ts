@@ -5,6 +5,7 @@ export interface ServiceOption {
   title: string;
   description: string;
   startingPrice: number;
+  priceHigh?: number;
   icon: string; // lucide icon name
 }
 
@@ -47,6 +48,43 @@ export interface TrustBadge {
   value?: string;
 }
 
+// --- ISN Native Scheduler Types ---
+
+export interface ISNTimeSlot {
+  start: string;
+  end: string;
+  inspectors: { id: string; name: string }[];
+  distance: number;
+  quote: number;
+}
+
+export interface SelectedSlot {
+  date: string;
+  start: string;
+  end: string;
+  inspectorId: string;
+  inspectorName: string;
+  quote: number;
+}
+
+// --- Contact & Property Types ---
+
+export type ContactRole = "buyer" | "owner" | "agent";
+
+export interface ContactInfo {
+  role: ContactRole | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+export interface PropertyInfo {
+  sqft: string;
+}
+
+// --- Booking State ---
+
 export interface BookingState {
   currentStep: number;
   serviceType: ServiceType | null;
@@ -62,6 +100,16 @@ export interface BookingState {
   callbackPhone: string;
   callbackName: string;
 
+  // Contact & property
+  contact: ContactInfo;
+  property: PropertyInfo;
+
+  // Native scheduler
+  selectedSlot: SelectedSlot | null;
+
+  // Scheduler attribution (VIP link tracking)
+  schedulerId: string | null;
+
   // Actions
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -71,5 +119,9 @@ export interface BookingState {
   setZipValid: (valid: boolean | null) => void;
   setPackage: (pkg: PackageTier) => void;
   setCallback: (data: { name?: string; phone?: string; requested?: boolean }) => void;
+  setContact: (data: Partial<ContactInfo>) => void;
+  setProperty: (data: Partial<PropertyInfo>) => void;
+  setSelectedSlot: (slot: SelectedSlot | null) => void;
+  setSchedulerId: (id: string | null) => void;
   reset: () => void;
 }

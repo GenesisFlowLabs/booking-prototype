@@ -6,6 +6,7 @@ export const packages: Package[] = [
     name: "Green",
     tagline: "Essential coverage",
     price: 545,
+    priceNote: "starting at",
     features: [
       "Full home inspection",
       "Digital report within 24 hours",
@@ -18,9 +19,8 @@ export const packages: Package[] = [
     id: "greener",
     name: "Greener",
     tagline: "Complete peace of mind",
-    // NOTE: Price estimated — verify with GreenWorks before going live
     price: 895,
-    priceNote: "estimated",
+    priceNote: "starting at",
     popular: true,
     features: [
       "Everything in Green, plus:",
@@ -35,9 +35,8 @@ export const packages: Package[] = [
     id: "greenest",
     name: "Greenest",
     tagline: "The full picture",
-    // NOTE: Price estimated — verify with GreenWorks before going live
     price: 1195,
-    priceNote: "estimated",
+    priceNote: "starting at",
     features: [
       "Everything in Greener, plus:",
       "Pool & spa inspection",

@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useBookingStore } from "@/store/booking";
 import { StepIndicator } from "./StepIndicator";
 import { ServiceTypeStep } from "./ServiceTypeStep";
+import { DetailsStep } from "./DetailsStep";
 import { PackageStep } from "./PackageStep";
 import { SchedulerStep } from "./SchedulerStep";
 import { ConfirmationStep } from "./ConfirmationStep";
@@ -25,18 +27,29 @@ const stepVariants = {
 
 export function BookingFlow() {
   const { currentStep } = useBookingStore();
-  // Track direction for animation (positive = forward, negative = backward)
   const direction = useBookingStore((s) => s.currentStep);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevStepRef = useRef(currentStep);
+
+  // Scroll to top of booking flow on step change
+  useEffect(() => {
+    if (currentStep !== prevStepRef.current) {
+      prevStepRef.current = currentStep;
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [currentStep]);
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return <ServiceTypeStep />;
       case 2:
-        return <PackageStep />;
+        return <DetailsStep />;
       case 3:
-        return <SchedulerStep />;
+        return <PackageStep />;
       case 4:
+        return <SchedulerStep />;
+      case 5:
         return <ConfirmationStep />;
       default:
         return <ServiceTypeStep />;
@@ -44,7 +57,7 @@ export function BookingFlow() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div ref={containerRef} className="w-full max-w-5xl mx-auto scroll-mt-4">
       <StepIndicator currentStep={currentStep} />
 
       <div className="relative min-h-[500px] md:min-h-[600px]">

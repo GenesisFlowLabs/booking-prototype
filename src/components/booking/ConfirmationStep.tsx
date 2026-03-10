@@ -14,11 +14,35 @@ import {
   Phone,
   FileText,
   Shield,
+  User,
+  Calendar,
+  Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+function formatTime(datetime: string): string {
+  const time = datetime.split(" ")[1];
+  const [h, m] = time.split(":");
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${h12}:${m} ${ampm}`;
+}
+
+function formatInspectorName(name: string): string {
+  const parts = name.split(",")[0].split(" ");
+  if (parts.length >= 2) return `${parts[0]} ${parts[1][0]}.`;
+  return parts[0];
+}
+
+const roleLabels: Record<string, string> = {
+  buyer: "Home Buyer",
+  owner: "Home Owner",
+  agent: "Buyer's Agent",
+};
+
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, prevStep, reset } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, prevStep, reset } =
     useBookingStore();
 
   const service = services.find((s) => s.id === serviceType);
@@ -26,21 +50,9 @@ export function ConfirmationStep() {
 
   const timelineSteps = [
     { icon: CheckCircle2, label: "Booking confirmed", detail: "You'll receive a text confirmation" },
-    {
-      icon: FileText,
-      label: "Pre-inspection prep",
-      detail: "Checklist sent to you",
-    },
-    {
-      icon: Wrench,
-      label: "Inspection day",
-      detail: "2-4 hours on-site",
-    },
-    {
-      icon: FileText,
-      label: "Report delivered",
-      detail: "Within 24 hours",
-    },
+    { icon: FileText, label: "Pre-inspection prep", detail: "Checklist sent to you" },
+    { icon: Wrench, label: "Inspection day", detail: "2-4 hours on-site" },
+    { icon: FileText, label: "Report delivered", detail: "Within 24 hours" },
   ];
 
   return (
@@ -55,11 +67,10 @@ export function ConfirmationStep() {
           <CheckCircle2 className="w-8 h-8 text-gw-green" />
         </motion.div>
         <h2 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
-          You&apos;re almost there!
+          Review your booking
         </h2>
         <p className="text-gray-500 mt-2">
-          Review your selections below. Our team will confirm your appointment
-          shortly.
+          Confirm everything looks right, then submit.
         </p>
       </div>
 
@@ -78,15 +89,48 @@ export function ConfirmationStep() {
           </div>
         </div>
 
-        {/* Area */}
+        {/* Address */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gw-blue/10 flex items-center justify-center">
             <MapPin className="w-5 h-5 text-gw-blue" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">SERVICE AREA</p>
+            <p className="text-xs text-gray-400 font-medium">PROPERTY ADDRESS</p>
             <p className="font-semibold text-gray-900">
-              {address.zip}{address.state ? `, ${address.state}` : ""}
+              {address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : `${address.zip}${address.state ? `, ${address.state}` : ""}`}
+            </p>
+            {property.sqft && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                ~{parseInt(property.sqft).toLocaleString()} sq ft
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Contact */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+            <User className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium">CONTACT</p>
+            <p className="font-semibold text-gray-900">
+              {contact.firstName} {contact.lastName}
+              {contact.role && (
+                <span className="text-xs text-gray-400 ml-2">
+                  ({roleLabels[contact.role] || contact.role})
+                </span>
+              )}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3" />
+                {contact.email}
+              </span>
+              <span className="flex items-center gap-1">
+                <Phone className="w-3 h-3" />
+                {contact.phone}
+              </span>
             </p>
           </div>
         </div>
@@ -99,15 +143,33 @@ export function ConfirmationStep() {
           <div>
             <p className="text-xs text-gray-400 font-medium">PACKAGE</p>
             <p className="font-semibold text-gray-900">
-              {pkg?.name || "Green"} — ${pkg?.price.toLocaleString() || "545"}
-              {pkg?.priceNote && (
-                <span className="text-xs text-gray-400 ml-1">
-                  ({pkg.priceNote})
-                </span>
-              )}
+              {pkg?.name || "Green"} — Starting at ${pkg?.price.toLocaleString() || "545"}
             </p>
           </div>
         </div>
+
+        {/* Scheduled Time */}
+        {selectedSlot && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">APPOINTMENT</p>
+              <p className="font-semibold text-gray-900">
+                {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {formatTime(selectedSlot.start)} – {formatTime(selectedSlot.end)} &middot; Inspector: {formatInspectorName(selectedSlot.inspectorName)}
+              </p>
+            </div>
+          </div>
+        )}
 
         <hr className="border-gray-100" />
 
@@ -145,6 +207,10 @@ export function ConfirmationStep() {
 
         <hr className="border-gray-100" />
 
+        <div className="text-center text-xs text-gray-400 italic">
+          Final pricing will be confirmed after order submission based on property size and selected services.
+        </div>
+
         {/* Trust */}
         <div className="flex items-center gap-3 text-sm text-gray-500">
           <Shield className="w-5 h-5 text-gw-green flex-shrink-0" />
@@ -156,17 +222,30 @@ export function ConfirmationStep() {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
-        <Button onClick={prevStep} variant="ghost">
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </Button>
+      <div className="flex flex-col items-center gap-4 mt-8">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <Button onClick={prevStep} variant="ghost">
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </Button>
+          <button
+            onClick={() => {
+              // TODO: POST to ISN /orders when API is ready
+              alert("Booking submitted! In production this will create an ISN order.");
+            }}
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            Submit Booking
+          </button>
+        </div>
+
         <a
-          href="sms:8553496757&body=Hi%2C%20I%20just%20booked%20an%20inspection%20and%20would%20like%20to%20confirm."
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-md"
+          href={`sms:8553496757&body=${encodeURIComponent(`Hi, I just booked a ${selectedPackage} inspection at ${address.street}, ${address.city} ${address.state} ${address.zip}. Name: ${contact.firstName} ${contact.lastName}. Please confirm.`)}`}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-gw-green hover:text-gw-green-dark transition-colors"
         >
-          <Phone className="w-5 h-5" />
-          Text to Confirm — (855) 349-6757
+          <Phone className="w-4 h-4" />
+          Or text to confirm — (855) 349-6757
         </a>
       </div>
 

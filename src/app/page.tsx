@@ -1,16 +1,36 @@
 "use client";
 
+import { useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { TrustBar } from "@/components/social/TrustBar";
 import { StatsStrip } from "@/components/social/StatsStrip";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { CallbackForm } from "@/components/booking/CallbackForm";
+import { useBookingStore } from "@/store/booking";
 import { Shield, Star, Award } from "lucide-react";
+
+function SchedulerCapture() {
+  const searchParams = useSearchParams();
+  const setSchedulerId = useBookingStore((s) => s.setSchedulerId);
+
+  useEffect(() => {
+    const scheduler = searchParams.get("scheduler");
+    if (scheduler) {
+      setSchedulerId(scheduler);
+    }
+  }, [searchParams, setSchedulerId]);
+
+  return null;
+}
 
 export default function Home() {
   return (
     <>
+      <Suspense>
+        <SchedulerCapture />
+      </Suspense>
       <Header />
 
       {/* Hero section */}

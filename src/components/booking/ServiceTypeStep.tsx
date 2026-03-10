@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useBookingStore } from "@/store/booking";
 import { services } from "@/data/services";
 import { RadioCard } from "@/components/ui/RadioCard";
@@ -20,6 +20,7 @@ const iconMap: Record<string, React.ElementType> = {
 export function ServiceTypeStep() {
   const { serviceType, setServiceType, address, setAddress, isValidZip, setZipValid, nextStep } = useBookingStore();
   const [zip, setZip] = useState(address.zip);
+  const zipRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (zip.length === 5) {
@@ -34,6 +35,14 @@ export function ServiceTypeStep() {
       setZipValid(null);
     }
   }, [zip, setZipValid, setAddress]);
+
+  // Auto-advance when both service + valid zip are set
+  useEffect(() => {
+    if (serviceType && isValidZip === true) {
+      const timer = setTimeout(() => nextStep(), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [serviceType, isValidZip, nextStep]);
 
   const zipResult = zip.length === 5 ? validateZip(zip) : null;
   const canProceed = serviceType !== null && isValidZip === true;
@@ -56,7 +65,10 @@ export function ServiceTypeStep() {
             <RadioCard
               key={service.id}
               selected={serviceType === service.id}
-              onSelect={() => setServiceType(service.id as ServiceType)}
+              onSelect={() => {
+                setServiceType(service.id as ServiceType);
+                setTimeout(() => zipRef.current?.focus(), 150);
+              }}
             >
               <div className="flex items-start gap-4">
                 <div
@@ -76,7 +88,7 @@ export function ServiceTypeStep() {
                     {service.description}
                   </p>
                   <p className="text-sm font-semibold text-gw-green mt-2">
-                    Starting at ${service.startingPrice}
+                    ${service.startingPrice} – ${service.priceHigh?.toLocaleString() ?? service.startingPrice}
                   </p>
                 </div>
               </div>
@@ -93,10 +105,13 @@ export function ServiceTypeStep() {
             Property ZIP Code
           </label>
           <input
+            ref={zipRef}
             type="text"
             inputMode="numeric"
+            pattern="[0-9]*"
             value={zip}
             onChange={(e) => setZip(e.target.value.replace(/\D/g, "").slice(0, 5))}
+            onKeyDown={(e) => { if (e.key === "Enter" && canProceed) nextStep(); }}
             placeholder="75201"
             maxLength={5}
             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-base text-center text-lg font-semibold tracking-wider transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-gw-green focus:ring-gw-green/20"

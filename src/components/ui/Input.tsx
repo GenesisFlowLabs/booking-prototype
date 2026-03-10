@@ -6,6 +6,7 @@ interface InputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   type?: string;
+  inputMode?: "text" | "numeric" | "tel" | "email" | "decimal";
   required?: boolean;
   error?: string;
   success?: string;
@@ -20,6 +21,7 @@ export function Input({
   onChange,
   placeholder,
   type = "text",
+  inputMode,
   required = false,
   error,
   success,
@@ -36,6 +38,7 @@ export function Input({
       <input
         ref={inputRef}
         type={type}
+        inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
