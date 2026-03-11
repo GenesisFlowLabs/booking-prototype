@@ -3,6 +3,7 @@
 import { useBookingStore } from "@/store/booking";
 import { services } from "@/data/services";
 import { packages } from "@/data/packages";
+import { getAgentBySlug } from "@/data/agents";
 import { Button } from "@/components/ui/Button";
 import {
   ArrowLeft,
@@ -15,6 +16,7 @@ import {
   FileText,
   Shield,
   User,
+  UserCheck,
   Calendar,
   Mail,
 } from "lucide-react";
@@ -42,11 +44,12 @@ const roleLabels: Record<string, string> = {
 };
 
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, contact, property, selectedSlot, prevStep, reset } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset } =
     useBookingStore();
 
   const service = services.find((s) => s.id === serviceType);
   const pkg = packages.find((p) => p.id === selectedPackage);
+  const referringAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
 
   const timelineSteps = [
     { icon: CheckCircle2, label: "Booking confirmed", detail: "You'll receive a text confirmation" },
@@ -134,6 +137,22 @@ export function ConfirmationStep() {
             </p>
           </div>
         </div>
+
+        {/* Referring Agent */}
+        {referringAgent && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gw-green/10 flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-gw-green" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">REFERRED BY</p>
+              <p className="font-semibold text-gray-900">
+                {referringAgent.name}
+                <span className="text-gray-400 font-normal">, {referringAgent.company}</span>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Package */}
         <div className="flex items-center gap-3">

@@ -16,9 +16,13 @@ function SchedulerCapture() {
   const setSchedulerId = useBookingStore((s) => s.setSchedulerId);
 
   useEffect(() => {
+    // ?ref= is the primary param (VIP agent referral links)
+    // ?scheduler= kept for backwards compat
+    const ref = searchParams.get("ref");
     const scheduler = searchParams.get("scheduler");
-    if (scheduler) {
-      setSchedulerId(scheduler);
+    const id = ref || scheduler;
+    if (id) {
+      setSchedulerId(id);
     }
   }, [searchParams, setSchedulerId]);
 

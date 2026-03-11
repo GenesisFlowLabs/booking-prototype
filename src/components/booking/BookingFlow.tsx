@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useBookingStore } from "@/store/booking";
 import { StepIndicator } from "./StepIndicator";
+import { AgentBanner } from "./AgentBanner";
 import { ServiceTypeStep } from "./ServiceTypeStep";
 import { DetailsStep } from "./DetailsStep";
 import { PackageStep } from "./PackageStep";
@@ -58,6 +59,7 @@ export function BookingFlow() {
 
   return (
     <div ref={containerRef} className="w-full max-w-5xl mx-auto scroll-mt-4">
+      <AgentBanner />
       <StepIndicator currentStep={currentStep} />
 
       <div className="relative min-h-[500px] md:min-h-[600px]">
