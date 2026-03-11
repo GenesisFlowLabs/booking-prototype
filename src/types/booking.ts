@@ -1,4 +1,4 @@
-export type ServiceType = "home" | "engineering" | "environmental" | "new-construction";
+export type ServiceType = "home" | "engineering" | "environmental" | "new-construction" | "commercial";
 
 export interface ServiceOption {
   id: ServiceType;

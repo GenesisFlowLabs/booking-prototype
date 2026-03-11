@@ -5,7 +5,7 @@ import { useBookingStore } from "@/store/booking";
 import { services } from "@/data/services";
 import { RadioCard } from "@/components/ui/RadioCard";
 import { Button } from "@/components/ui/Button";
-import { Home, HardHat, Leaf, Building2, ArrowRight, MapPin, CheckCircle2, XCircle } from "lucide-react";
+import { Home, HardHat, Leaf, Building2, Building, ArrowRight, MapPin, CheckCircle2, XCircle } from "lucide-react";
 import { ServiceType } from "@/types/booking";
 import { validateZip } from "@/data/service-areas";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,7 @@ const iconMap: Record<string, React.ElementType> = {
   HardHat,
   Leaf,
   Building2,
+  Building,
 };
 
 export function ServiceTypeStep() {
