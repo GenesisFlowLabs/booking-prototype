@@ -79,7 +79,7 @@ export function getISNMarketTags(zip: string): string[] | null {
   return metroToISNTag[result.metro] || null;
 }
 
-export function validateZip(zip: string): { valid: boolean; metro?: string; state?: string } {
+export function validateZip(zip: string): { valid: boolean; metro?: string; state?: string; stateCode?: string } {
   const zipNum = parseInt(zip, 10);
   if (isNaN(zipNum) || zip.length !== 5) {
     return { valid: false };
@@ -89,7 +89,7 @@ export function validateZip(zip: string): { valid: boolean; metro?: string; stat
     for (const metro of area.metros) {
       for (const [min, max] of metro.zipRanges) {
         if (zipNum >= min && zipNum <= max) {
-          return { valid: true, metro: metro.name, state: area.state };
+          return { valid: true, metro: metro.name, state: area.state, stateCode: area.stateCode };
         }
       }
     }

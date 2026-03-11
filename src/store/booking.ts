@@ -69,9 +69,8 @@ export const useBookingStore = create<BookingState>()(
         }),
     }),
     {
-      name: "gw-booking",
+      name: "gw-booking-v2",
       partialize: (state) => ({
-        currentStep: state.currentStep,
         serviceType: state.serviceType,
         address: state.address,
         isValidZip: state.isValidZip,

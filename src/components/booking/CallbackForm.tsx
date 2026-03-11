@@ -33,11 +33,10 @@ export function CallbackForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full bg-gw-orange text-white font-semibold font-heading shadow-lg hover:bg-gw-orange-light transition-colors cursor-pointer"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center justify-center gap-2 w-12 h-12 sm:w-auto sm:h-auto sm:px-5 sm:py-3 rounded-full bg-gw-orange text-white text-sm sm:text-base font-semibold font-heading shadow-lg hover:bg-gw-orange-light transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5" />
           <span className="hidden sm:inline">Request a Call</span>
-          <span className="sm:hidden">Call Me</span>
         </motion.button>
       )}
 

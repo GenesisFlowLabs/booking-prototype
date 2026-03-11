@@ -27,8 +27,8 @@ export function ServiceTypeStep() {
     if (zip.length === 5) {
       const result = validateZip(zip);
       setZipValid(result.valid);
-      if (result.valid && result.state) {
-        setAddress({ zip, state: result.state });
+      if (result.valid && result.stateCode) {
+        setAddress({ zip, state: result.stateCode });
       } else {
         setAddress({ zip });
       }
@@ -45,8 +45,24 @@ export function ServiceTypeStep() {
     }
   }, [serviceType, isValidZip, nextStep]);
 
+  const [showErrors, setShowErrors] = useState(false);
   const zipResult = zip.length === 5 ? validateZip(zip) : null;
   const canProceed = serviceType !== null && isValidZip === true;
+
+  const handleContinue = () => {
+    if (canProceed) {
+      setShowErrors(false);
+      nextStep();
+    } else {
+      setShowErrors(true);
+      if (!serviceType) {
+        // scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        zipRef.current?.focus();
+      }
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -155,8 +171,25 @@ export function ServiceTypeStep() {
         </div>
       </div>
 
+      <AnimatePresence>
+        {showErrors && !canProceed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-6 max-w-sm mx-auto p-3 rounded-xl bg-red-50 border border-red-200 text-center"
+          >
+            <p className="text-sm font-semibold text-red-800">
+              {!serviceType && !isValidZip ? "Please select a service and enter your ZIP code." :
+               !serviceType ? "Please select a service type above." :
+               "Please enter a valid ZIP code in our service area."}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex justify-center mt-8">
-        <Button onClick={nextStep} disabled={!canProceed} size="lg">
+        <Button onClick={handleContinue} size="lg">
           Continue
           <ArrowRight className="w-5 h-5" />
         </Button>

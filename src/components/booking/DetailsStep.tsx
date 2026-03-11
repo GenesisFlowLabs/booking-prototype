@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useBookingStore } from "@/store/booking";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +32,8 @@ export function DetailsStep() {
 
   const [streetInput, setStreetInput] = useState(address.street);
   const [sqftLoading, setSqftLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const firstErrorRef = useRef<HTMLDivElement>(null);
 
   const lookupProperty = useCallback(async (street: string, city: string, state: string, zip: string) => {
     const full = `${street}, ${city}, ${state} ${zip}`;
@@ -68,8 +70,8 @@ export function DetailsStep() {
     if (address.zip.length === 5) {
       const result = validateZip(address.zip);
       setZipValid(result.valid);
-      if (result.valid && result.state) {
-        setAddress({ state: result.state });
+      if (result.valid && result.stateCode) {
+        setAddress({ state: result.stateCode });
       }
     } else {
       setZipValid(null);
@@ -98,6 +100,27 @@ export function DetailsStep() {
     contact.lastName.trim() !== "" &&
     contact.email.trim() !== "" &&
     contact.phone.trim() !== "";
+
+  const missingFields: string[] = [];
+  if (!address.street.trim()) missingFields.push("Street address");
+  if (!address.city.trim()) missingFields.push("City");
+  if (!address.state) missingFields.push("State");
+  if (isValidZip !== true) missingFields.push("Valid ZIP code");
+  if (!contact.role) missingFields.push("Your role");
+  if (!contact.firstName.trim()) missingFields.push("First name");
+  if (!contact.lastName.trim()) missingFields.push("Last name");
+  if (!contact.email.trim()) missingFields.push("Email");
+  if (!contact.phone.trim()) missingFields.push("Phone");
+
+  const handleContinue = () => {
+    if (canProceed) {
+      setShowErrors(false);
+      nextStep();
+    } else {
+      setShowErrors(true);
+      firstErrorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto">
@@ -172,7 +195,7 @@ export function DetailsStep() {
           </AnimatePresence>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="col-span-2">
             <Input
               label="City"
@@ -352,12 +375,31 @@ export function DetailsStep() {
         />
       </div>
 
+      <AnimatePresence>
+        {showErrors && missingFields.length > 0 && (
+          <motion.div
+            ref={firstErrorRef}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-5 p-4 rounded-xl bg-red-50 border border-red-200"
+          >
+            <p className="text-sm font-semibold text-red-800 mb-1">Please complete the following:</p>
+            <ul className="text-sm text-red-700 list-disc list-inside space-y-0.5">
+              {missingFields.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between mt-8">
         <Button onClick={prevStep} variant="ghost">
           <ArrowLeft className="w-5 h-5" />
           Back
         </Button>
-        <Button onClick={nextStep} disabled={!canProceed} size="lg">
+        <Button onClick={handleContinue} size="lg">
           Continue
           <ArrowRight className="w-5 h-5" />
         </Button>

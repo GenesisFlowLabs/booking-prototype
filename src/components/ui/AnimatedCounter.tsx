@@ -9,6 +9,7 @@ interface AnimatedCounterProps {
   decimals?: number;
   duration?: number;
   className?: string;
+  immediate?: boolean;
 }
 
 export function AnimatedCounter({
@@ -17,13 +18,15 @@ export function AnimatedCounter({
   decimals = 0,
   duration = 2,
   className = "",
+  immediate = false,
 }: AnimatedCounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "200px" });
   const [display, setDisplay] = useState("0");
+  const shouldAnimate = immediate || isInView;
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!shouldAnimate) return;
 
     const startTime = Date.now();
     const durationMs = duration * 1000;
@@ -47,14 +50,14 @@ export function AnimatedCounter({
     };
 
     requestAnimationFrame(animate);
-  }, [isInView, value, duration, decimals]);
+  }, [shouldAnimate, value, duration, decimals]);
 
   return (
     <motion.span
       ref={ref}
       className={className}
       initial={{ opacity: 0, y: 10 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
     >
       {display}{suffix}
     </motion.span>

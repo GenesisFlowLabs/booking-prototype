@@ -15,6 +15,7 @@ export function StatsStrip() {
                   value={stat.value}
                   suffix={stat.suffix}
                   decimals={stat.decimals}
+                  immediate
                 />
               </div>
               <div className="text-green-200 text-xs md:text-sm mt-1">
