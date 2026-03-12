@@ -31,6 +31,7 @@ export const useBookingStore = create<BookingState>()(
       property: { ...initialProperty },
       selectedSlot: null,
       schedulerId: null,
+      bookingSubmitted: false,
 
       setStep: (step) => set({ currentStep: step }),
       nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, TOTAL_STEPS) })),
@@ -52,6 +53,7 @@ export const useBookingStore = create<BookingState>()(
         set((s) => ({ property: { ...s.property, ...data } })),
       setSelectedSlot: (slot) => set({ selectedSlot: slot }),
       setSchedulerId: (id) => set({ schedulerId: id }),
+      setBookingSubmitted: (submitted) => set({ bookingSubmitted: submitted }),
       reset: () =>
         set({
           currentStep: 1,
@@ -65,6 +67,7 @@ export const useBookingStore = create<BookingState>()(
           contact: { ...initialContact },
           property: { ...initialProperty },
           selectedSlot: null,
+          bookingSubmitted: false,
           // Don't reset schedulerId — it persists from URL
         }),
     }),

@@ -18,9 +18,12 @@ import {
   User,
   UserCheck,
   Calendar,
+  CalendarPlus,
   Mail,
+  Download,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function formatTime(datetime: string): string {
   const time = datetime.split(" ")[1];
@@ -37,6 +40,60 @@ function formatInspectorName(name: string): string {
   return parts[0];
 }
 
+function toICSDate(datetime: string): string {
+  // datetime format: "2026-03-15 09:00:00" → "20260315T090000"
+  return datetime.replace(/[-: ]/g, "").slice(0, 15);
+}
+
+function buildGoogleCalendarUrl(
+  title: string,
+  start: string,
+  end: string,
+  location: string,
+  description: string
+): string {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${toICSDate(start)}/${toICSDate(end)}`,
+    location,
+    details: description,
+  });
+  return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+
+function buildICSFile(
+  title: string,
+  start: string,
+  end: string,
+  location: string,
+  description: string
+): string {
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//GreenWorks Inspections//Booking//EN",
+    "BEGIN:VEVENT",
+    `DTSTART:${toICSDate(start)}`,
+    `DTEND:${toICSDate(end)}`,
+    `SUMMARY:${title}`,
+    `LOCATION:${location}`,
+    `DESCRIPTION:${description.replace(/\n/g, "\\n")}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
+function downloadICS(ics: string, filename: string) {
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 const roleLabels: Record<string, string> = {
   buyer: "Home Buyer",
   owner: "Home Owner",
@@ -44,9 +101,10 @@ const roleLabels: Record<string, string> = {
 };
 
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset, setBookingSubmitted } =
     useBookingStore();
 
+  const [submitted, setSubmitted] = useState(false);
   const service = services.find((s) => s.id === serviceType);
   const pkg = packages.find((p) => p.id === selectedPackage);
   const referringAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
@@ -57,6 +115,103 @@ export function ConfirmationStep() {
     { icon: Wrench, label: "Inspection day", detail: "2-4 hours on-site" },
     { icon: FileText, label: "Report delivered", detail: "Within 24 hours" },
   ];
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-8">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", damping: 12, delay: 0.1 }}
+          className="w-20 h-20 rounded-full bg-gw-green/10 flex items-center justify-center mx-auto mb-6"
+        >
+          <CheckCircle2 className="w-10 h-10 text-gw-green" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
+            You&apos;re all set!
+          </h2>
+          <p className="text-gray-500 mt-3 max-w-md mx-auto">
+            We&apos;ve received your booking request. You&apos;ll get a text confirmation shortly with your appointment details.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-left max-w-sm mx-auto space-y-3"
+        >
+          <div className="flex items-center gap-3">
+            <Wrench className="w-5 h-5 text-gw-green" />
+            <p className="text-sm font-semibold text-gray-900">{service?.title}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <MapPin className="w-5 h-5 text-gw-blue" />
+            <p className="text-sm text-gray-700">
+              {address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : `${address.zip}`}
+            </p>
+          </div>
+          {selectedSlot && (
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <p className="text-sm text-gray-700">
+                {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                {" "}at {formatTime(selectedSlot.start)}
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {selectedSlot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3"
+          >
+            {(() => {
+              const loc = address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : "";
+              const title = `${service?.title || "Home Inspection"} - GreenWorks`;
+              const desc = `${service?.title || "Home Inspection"} by GreenWorks Inspections.\nPackage: ${pkg?.name || "Green"}\nContact: ${contact.firstName} ${contact.lastName} (${contact.phone})`;
+              return (
+                <>
+                  <a
+                    href={buildGoogleCalendarUrl(title, selectedSlot.start, selectedSlot.end, loc, desc)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gw-green text-white text-sm font-semibold font-heading shadow-md hover:bg-gw-green-light transition-colors"
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    Add to Google Calendar
+                  </a>
+                  <button
+                    onClick={() => downloadICS(buildICSFile(title, selectedSlot.start, selectedSlot.end, loc, desc), "greenworks-inspection.ics")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 text-sm font-semibold font-heading hover:border-gw-green hover:text-gw-green transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Apple / Outlook (.ics)
+                  </button>
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-8 space-y-3">
+          <p className="text-sm text-gray-400">
+            Questions? Call us at <a href="tel:8553496757" className="font-semibold text-gw-green">(855) 349-6757</a>
+          </p>
+          <button
+            onClick={() => { setSubmitted(false); reset(); }}
+            className="text-sm text-gray-400 hover:text-gray-600 underline cursor-pointer"
+          >
+            Book another inspection
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -249,8 +404,9 @@ export function ConfirmationStep() {
           </Button>
           <button
             onClick={() => {
-              // TODO: POST to ISN /orders when API is ready
-              alert("Booking submitted! In production this will create an ISN order.");
+              // TODO: POST to /api/isn/order when ready
+              setSubmitted(true);
+              setBookingSubmitted(true);
             }}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer"
           >

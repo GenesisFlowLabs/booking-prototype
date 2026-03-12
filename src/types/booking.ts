@@ -110,6 +110,9 @@ export interface BookingState {
   // Scheduler attribution (VIP link tracking)
   schedulerId: string | null;
 
+  // Submission state (hides step indicator on success screen)
+  bookingSubmitted: boolean;
+
   // Actions
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -123,5 +126,6 @@ export interface BookingState {
   setProperty: (data: Partial<PropertyInfo>) => void;
   setSelectedSlot: (slot: SelectedSlot | null) => void;
   setSchedulerId: (id: string | null) => void;
+  setBookingSubmitted: (submitted: boolean) => void;
   reset: () => void;
 }

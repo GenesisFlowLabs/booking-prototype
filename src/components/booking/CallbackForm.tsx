@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Phone, X, CheckCircle2 } from "lucide-react";
 
 export function CallbackForm() {
-  const { callbackName, callbackPhone, callbackRequested, setCallback } =
+  const { callbackName, callbackPhone, callbackRequested, setCallback, currentStep } =
     useBookingStore();
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -26,8 +26,8 @@ export function CallbackForm() {
 
   return (
     <>
-      {/* Floating trigger button */}
-      {!open && !callbackRequested && (
+      {/* Floating trigger button — hidden during package, scheduler, and confirm steps */}
+      {!open && !callbackRequested && currentStep < 3 && (
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

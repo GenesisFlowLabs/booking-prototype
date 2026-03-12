@@ -23,7 +23,7 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
         relative w-full text-left rounded-2xl p-6 md:p-7 transition-all duration-200 cursor-pointer
         ${isPopular && !selected ? "ring-2 ring-gw-green shadow-lg" : ""}
         ${selected
-          ? "bg-gw-green text-white shadow-xl ring-2 ring-gw-green"
+          ? "bg-gw-green/5 border-2 border-gw-green shadow-xl ring-2 ring-gw-green/30"
           : "bg-white border border-gray-200 hover:shadow-md"
         }
       `}
@@ -32,11 +32,7 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <div
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md ${
-              selected
-                ? "bg-white text-gw-green"
-                : "bg-gw-green text-white"
-            }`}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md bg-gw-green text-white"
           >
             <Star className="w-3.5 h-3.5 fill-current" />
             MOST POPULAR
@@ -49,52 +45,36 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white flex items-center justify-center"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gw-green flex items-center justify-center shadow-md"
         >
-          <Check className="w-5 h-5 text-gw-green" strokeWidth={3} />
+          <Check className="w-5 h-5 text-white" strokeWidth={3} />
         </motion.div>
       )}
 
       {/* Package name */}
       <h3
         className={`text-xl font-heading font-bold mt-1 ${
-          selected ? "text-white" : "text-gray-900"
+          selected ? "text-gw-green" : "text-gray-900"
         }`}
       >
         {pkg.name}
       </h3>
-      <p
-        className={`text-sm mt-1 ${
-          selected ? "text-green-100" : "text-gray-500"
-        }`}
-      >
+      <p className="text-sm mt-1 text-gray-500">
         {pkg.tagline}
       </p>
 
       {/* Price */}
       <div className="mt-4 mb-5">
         {pkg.priceNote === "starting at" && (
-          <span
-            className={`text-xs font-medium block mb-0.5 ${
-              selected ? "text-green-200" : "text-gray-400"
-            }`}
-          >
+          <span className="text-xs font-medium block mb-0.5 text-gray-400">
             Starting at
           </span>
         )}
-        <span
-          className={`text-3xl md:text-4xl font-heading font-bold ${
-            selected ? "text-white" : "gradient-text-green"
-          }`}
-        >
+        <span className="text-3xl md:text-4xl font-heading font-bold gradient-text-green">
           ${pkg.price.toLocaleString()}
         </span>
         {pkg.priceNote && pkg.priceNote !== "starting at" && (
-          <span
-            className={`text-xs ml-2 ${
-              selected ? "text-green-200" : "text-gray-400"
-            }`}
-          >
+          <span className="text-xs ml-2 text-gray-400">
             ({pkg.priceNote})
           </span>
         )}
@@ -105,16 +85,10 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
         {pkg.features.map((feature, i) => (
           <li key={i} className="flex items-start gap-2">
             <Check
-              className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                selected ? "text-green-200" : "text-gw-green"
-              }`}
+              className="w-4 h-4 mt-0.5 flex-shrink-0 text-gw-green"
               strokeWidth={2.5}
             />
-            <span
-              className={`text-sm ${
-                selected ? "text-green-50" : "text-gray-600"
-              }`}
-            >
+            <span className="text-sm text-gray-600">
               {feature}
             </span>
           </li>

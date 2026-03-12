@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Clock,
   Loader2,
-  User,
   RefreshCw,
   Phone,
 } from "lucide-react";
@@ -38,14 +37,6 @@ function formatInspectorName(name: string): string {
   const parts = name.split(",")[0].split(" ");
   if (parts.length >= 2) return `${parts[0]} ${parts[1][0]}.`;
   return parts[0];
-}
-
-function getMarketFromName(name: string): string | null {
-  const markets = ["DFW", "HOU", "SA", "ATX", "SA/ATX", "COL", "OKC", "FLA"];
-  for (const m of markets) {
-    if (name.includes(m)) return m;
-  }
-  return null;
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -159,16 +150,6 @@ export function SchedulerStep() {
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
     );
   }, [slotsForDate]);
-
-  // All inspectors for selected date (for slot selection)
-  const inspectorsForSlot = useCallback(
-    (start: string, end: string) => {
-      return slotsForDate
-        .filter((s) => s.start === start && s.end === end)
-        .flatMap((s) => s.inspectors);
-    },
-    [slotsForDate]
-  );
 
   const handleSlotSelect = (slot: ISNTimeSlot) => {
     const date = slot.start.split(" ")[0];
@@ -349,13 +330,9 @@ export function SchedulerStep() {
 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
                   {uniqueSlots.map((slot) => {
-                    const inspectors = inspectorsForSlot(slot.start, slot.end);
                     const isChosen =
                       selectedSlot?.start === slot.start &&
                       selectedSlot?.end === slot.end;
-                    const market = getMarketFromName(
-                      slot.inspectors[0]?.name ?? ""
-                    );
 
                     return (
                       <button
@@ -404,18 +381,14 @@ export function SchedulerStep() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {inspectors.length} inspector
-                            {inspectors.length !== 1 ? "s" : ""}
-                          </span>
-                          {market && (
-                            <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">
-                              {market}
+                        {slot.quote > 0 && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            <span className="font-medium text-gw-green">
+                              ${slot.quote.toLocaleString()}
                             </span>
-                          )}
-                        </div>
+                            <span className="ml-1">estimated</span>
+                          </div>
+                        )}
                       </button>
                     );
                   })}

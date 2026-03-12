@@ -27,7 +27,7 @@ const stepVariants = {
 };
 
 export function BookingFlow() {
-  const { currentStep } = useBookingStore();
+  const { currentStep, bookingSubmitted } = useBookingStore();
   const direction = useBookingStore((s) => s.currentStep);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevStepRef = useRef(currentStep);
@@ -59,8 +59,12 @@ export function BookingFlow() {
 
   return (
     <div ref={containerRef} className="w-full max-w-5xl mx-auto scroll-mt-4">
-      <AgentBanner />
-      <StepIndicator currentStep={currentStep} />
+      {!bookingSubmitted && (
+        <>
+          <AgentBanner />
+          <StepIndicator currentStep={currentStep} />
+        </>
+      )}
 
       <div className="relative min-h-[500px] md:min-h-[600px]">
         <AnimatePresence mode="wait" custom={direction}>

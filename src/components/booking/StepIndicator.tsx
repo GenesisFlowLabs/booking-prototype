@@ -17,7 +17,8 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ currentStep }: StepIndicatorProps) {
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-6">
+    <div className="sticky top-16 md:top-20 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100/80">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between">
         {steps.map((step, i) => {
           const isComplete = currentStep > step.num;
@@ -72,6 +73,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
