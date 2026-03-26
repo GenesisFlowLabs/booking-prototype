@@ -9,13 +9,20 @@ export interface ServiceOption {
   icon: string; // lucide icon name
 }
 
-export type PackageTier = "green" | "greener" | "greenest";
+export type PackageTier = "green" | "greener" | "greenest" | "nc1" | "nc2" | "nc3";
 
 export interface PackageFeature {
   name: string;
   green: boolean;
   greener: boolean;
   greenest: boolean;
+}
+
+export interface NCPackageFeature {
+  name: string;
+  nc1: boolean;
+  nc2: boolean;
+  nc3: boolean;
 }
 
 export interface Package {
@@ -26,6 +33,8 @@ export interface Package {
   priceNote?: string; // e.g. "estimated" for unconfirmed prices
   popular?: boolean;
   features: string[];
+  serviceType?: ServiceType; // which service this package belongs to
+  isnOrderTypeId?: string; // Maps to ISN order_types UUID
 }
 
 export interface ServiceArea {
@@ -65,6 +74,44 @@ export interface SelectedSlot {
   inspectorId: string;
   inspectorName: string;
   quote: number;
+}
+
+// --- ISN Order Submission Types ---
+
+export interface ISNCreateOrderPayload {
+  datetime: string;
+  address: string;
+  city: string;
+  state: string;
+  postal: string;
+  client: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
+  agent?: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
+  inspectorId?: string;
+  orderType?: number;
+  notes?: string;
+  area?: string;
+  fee?: number;
+}
+
+export interface ISNCreateOrderResponse {
+  status: string;
+  orderId: string;
+  oid: number;
+}
+
+export interface SubmissionState {
+  submitting: boolean;
+  submitError: string | null;
+  orderId: string | null;
+  orderOid: number | null;
 }
 
 // --- Contact & Property Types ---

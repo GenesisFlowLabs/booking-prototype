@@ -66,6 +66,29 @@ export interface ISNSlot {
   quote: number;
 }
 
+export async function isnPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const { base, access, secret } = getConfig();
+  const url = `${base}${path}`;
+  const auth = Buffer.from(`${access}:${secret}`).toString("base64");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Basic ${auth}`,
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`ISN API ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
 export interface ISNPackage {
   id: string;
   name: string;
