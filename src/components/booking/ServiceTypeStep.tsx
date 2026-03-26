@@ -48,12 +48,20 @@ export function ServiceTypeStep() {
   }, [zip, setZipValid, setAddress]);
 
   // Auto-advance when both service + valid zip are set
+  // Guard: only fire on step 1, and only once (prevents double-advance during AnimatePresence exit)
+  const hasAdvanced = useRef(false);
+  const { currentStep } = useBookingStore();
   useEffect(() => {
-    if (serviceType && isValidZip === true) {
-      const timer = setTimeout(() => nextStep(), 800);
+    if (serviceType && isValidZip === true && currentStep === 1 && !hasAdvanced.current) {
+      const timer = setTimeout(() => {
+        if (!hasAdvanced.current) {
+          hasAdvanced.current = true;
+          nextStep();
+        }
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [serviceType, isValidZip, nextStep]);
+  }, [serviceType, isValidZip, currentStep, nextStep]);
 
   const [showErrors, setShowErrors] = useState(false);
   const zipResult = zip.length === 5 ? validateZip(zip) : null;
