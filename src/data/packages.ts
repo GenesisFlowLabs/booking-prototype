@@ -124,7 +124,7 @@ export const homePackages: Package[] = [
 export const ncPackages: Package[] = [
   {
     id: "nc1",
-    name: "New Construction Package 1",
+    name: "Green Package",
     tagline: "Essential new build coverage",
     price: 725,
     priceNote: "any size home",
@@ -145,7 +145,7 @@ export const ncPackages: Package[] = [
   },
   {
     id: "nc2",
-    name: "New Construction Package 2",
+    name: "Greener Package",
     tagline: "Full phase coverage",
     price: 1050,
     priceNote: "any size home",
@@ -160,7 +160,7 @@ export const ncPackages: Package[] = [
   },
   {
     id: "nc3",
-    name: "New Construction Package 3",
+    name: "Greenest Package",
     tagline: "Every phase, every detail",
     price: 1695,
     priceNote: "any size home",
