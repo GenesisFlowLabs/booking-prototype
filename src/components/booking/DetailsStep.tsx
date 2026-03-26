@@ -113,16 +113,6 @@ export function DetailsStep() {
   if (!contact.email.trim()) missingFields.push("Email");
   if (!contact.phone.trim()) missingFields.push("Phone");
 
-  // Auto-scroll to Continue when form is complete
-  useEffect(() => {
-    if (canProceed) {
-      const timer = setTimeout(() => {
-        continueRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [canProceed]);
-
   const handleContinue = () => {
     if (canProceed) {
       setShowErrors(false);
