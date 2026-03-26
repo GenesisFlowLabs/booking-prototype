@@ -3,5 +3,3 @@ node_modules
 .git
 .vercel
 out
-*.md
-.env.local
