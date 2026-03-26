@@ -109,9 +109,13 @@ export function ConfirmationStep() {
   const submitRef = useRef<HTMLDivElement>(null);
   const service = services.find((s) => s.id === serviceType);
 
-  // Auto-scroll to submit button after review renders
+  // Auto-scroll to submit button on review page, scroll to top on success
   useEffect(() => {
-    if (!submitted) {
+    if (submitted) {
+      // Success screen — scroll to top immediately
+      window.scrollTo({ top: 0, behavior: "instant" });
+    } else {
+      // Review page — guide to submit button
       const timer = setTimeout(() => {
         submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 800);
@@ -178,35 +182,44 @@ export function ConfirmationStep() {
     const calDesc = `${service?.title || "Home Inspection"} by GreenWorks Inspections.\nPackage: ${pkg?.name || "Green"}\nContact: ${contact.firstName} ${contact.lastName} (${contact.phone})`;
 
     return (
-      <div className="max-w-2xl mx-auto py-8 relative overflow-hidden">
-        {/* CSS Confetti */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{
-                x: `${40 + Math.random() * 20}%`,
-                y: -20,
-                rotate: 0,
-                opacity: 1,
-              }}
-              animate={{
-                x: `${Math.random() * 100}%`,
-                y: `${80 + Math.random() * 40}%`,
-                rotate: Math.random() * 720 - 360,
-                opacity: 0,
-              }}
-              transition={{
-                duration: 1.5 + Math.random() * 1.5,
-                delay: Math.random() * 0.5,
-                ease: "easeOut",
-              }}
-              className="absolute w-2 h-2 rounded-sm"
-              style={{
-                backgroundColor: ["#2E7D32", "#43A047", "#66BB6A", "#FFA726", "#42A5F5", "#EF5350", "#AB47BC"][i % 7],
-              }}
-            />
-          ))}
+      <div className="max-w-2xl mx-auto py-8 relative">
+        {/* Confetti burst */}
+        <div className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
+          {Array.from({ length: 60 }).map((_, i) => {
+            const size = 6 + Math.random() * 8;
+            const isRect = Math.random() > 0.5;
+            return (
+              <motion.div
+                key={i}
+                initial={{
+                  left: `${45 + Math.random() * 10}%`,
+                  top: "30%",
+                  rotate: 0,
+                  opacity: 1,
+                  scale: 1,
+                }}
+                animate={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${60 + Math.random() * 40}%`,
+                  rotate: Math.random() * 1080 - 540,
+                  opacity: 0,
+                  scale: 0.5,
+                }}
+                transition={{
+                  duration: 2 + Math.random() * 2,
+                  delay: Math.random() * 0.6,
+                  ease: "easeOut",
+                }}
+                className="absolute"
+                style={{
+                  width: isRect ? size * 1.5 : size,
+                  height: size,
+                  borderRadius: isRect ? 2 : size / 2,
+                  backgroundColor: ["#2E7D32", "#43A047", "#66BB6A", "#FFA726", "#42A5F5", "#EF5350", "#AB47BC", "#FFD54F"][i % 8],
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Success icon */}
