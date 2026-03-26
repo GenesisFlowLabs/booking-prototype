@@ -1,40 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// ISN webhook payload structure (based on ISN webhook documentation)
-interface ISNWebhookPayload {
-  event: string;
-  order_id?: string;
-  oid?: number;
-  data?: Record<string, unknown>;
-}
-
 export async function POST(req: NextRequest) {
-  let payload: ISNWebhookPayload;
+  let payload: Record<string, unknown>;
   try {
     payload = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { event, order_id, oid } = payload;
+  // ISN sends: { order_id, oid, type?, event?, ... }
+  // The event type field varies - check multiple possible keys
+  const orderId = payload.order_id as string | undefined;
+  const oid = payload.oid as number | undefined;
+  const event = (payload.event || payload.type || payload.action || "unknown") as string;
 
-  // Log all webhook events for debugging
-  console.log(`[ISN Webhook] event=${event} order_id=${order_id} oid=${oid}`);
+  // Log full payload on first few calls so we can see ISN's exact format
+  console.log(`[ISN Webhook] event=${event} order_id=${orderId} oid=${oid}`);
+  console.log(`[ISN Webhook] Full payload: ${JSON.stringify(payload)}`);
 
   switch (event) {
+    case "Order Created":
+    case "OrderCreated":
     case "order.created":
-    case "order.scheduled":
-      // Order was created or scheduled - this confirms our submission landed
-      console.log(`[ISN Webhook] Order ${oid} confirmed: ${event}`);
+      console.log(`[ISN Webhook] Order ${oid} created`);
       // Future: trigger SMS confirmation via Twilio/AirCall
       break;
 
-    case "order.canceled":
-      console.log(`[ISN Webhook] Order ${oid} canceled`);
+    case "Order Scheduled":
+    case "OrderScheduled":
+    case "order.scheduled":
+      console.log(`[ISN Webhook] Order ${oid} scheduled`);
       break;
 
+    case "Order Updated":
+    case "OrderUpdated":
+    case "order.updated":
+      console.log(`[ISN Webhook] Order ${oid} updated`);
+      break;
+
+    case "Order Completed":
+    case "OrderCompleted":
     case "order.completed":
       console.log(`[ISN Webhook] Order ${oid} completed`);
+      break;
+
+    case "Order Canceled":
+    case "OrderCanceled":
+    case "order.canceled":
+      console.log(`[ISN Webhook] Order ${oid} canceled`);
       break;
 
     default:
