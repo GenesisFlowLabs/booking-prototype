@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { BookingState } from "@/types/booking";
+import { BookingState, SubmissionState } from "@/types/booking";
 
 const TOTAL_STEPS = 5;
 
@@ -32,11 +32,21 @@ export const useBookingStore = create<BookingState>()(
       selectedSlot: null,
       schedulerId: null,
       bookingSubmitted: false,
+      submission: {
+        submitting: false,
+        submitError: null,
+        orderId: null,
+        orderOid: null,
+      },
 
       setStep: (step) => set({ currentStep: step }),
       nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, TOTAL_STEPS) })),
       prevStep: () => set((s) => ({ currentStep: Math.max(s.currentStep - 1, 1) })),
-      setServiceType: (type) => set({ serviceType: type }),
+      setServiceType: (type) => set((s) => ({
+        serviceType: type,
+        // Clear package selection when switching service types (different tier IDs)
+        selectedPackage: s.serviceType !== type ? null : s.selectedPackage,
+      })),
       setAddress: (address) =>
         set((s) => ({ address: { ...s.address, ...address } })),
       setZipValid: (valid) => set({ isValidZip: valid }),
@@ -54,6 +64,8 @@ export const useBookingStore = create<BookingState>()(
       setSelectedSlot: (slot) => set({ selectedSlot: slot }),
       setSchedulerId: (id) => set({ schedulerId: id }),
       setBookingSubmitted: (submitted) => set({ bookingSubmitted: submitted }),
+      setSubmission: (data) =>
+        set((s) => ({ submission: { ...s.submission, ...data } })),
       reset: () =>
         set({
           currentStep: 1,
@@ -68,19 +80,19 @@ export const useBookingStore = create<BookingState>()(
           property: { ...initialProperty },
           selectedSlot: null,
           bookingSubmitted: false,
+          submission: {
+            submitting: false,
+            submitError: null,
+            orderId: null,
+            orderOid: null,
+          },
           // Don't reset schedulerId — it persists from URL
         }),
     }),
     {
-      name: "gw-booking-v2",
+      name: "gw-booking-v3",
       partialize: (state) => ({
-        serviceType: state.serviceType,
-        address: state.address,
-        isValidZip: state.isValidZip,
-        selectedPackage: state.selectedPackage,
-        contact: state.contact,
-        property: state.property,
-        selectedSlot: state.selectedSlot,
+        // Only persist the agent referral link — form data resets each visit
         schedulerId: state.schedulerId,
       }),
     }

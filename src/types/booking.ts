@@ -160,6 +160,9 @@ export interface BookingState {
   // Submission state (hides step indicator on success screen)
   bookingSubmitted: boolean;
 
+  // Order submission
+  submission: SubmissionState;
+
   // Actions
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -174,5 +177,6 @@ export interface BookingState {
   setSelectedSlot: (slot: SelectedSlot | null) => void;
   setSchedulerId: (id: string | null) => void;
   setBookingSubmitted: (submitted: boolean) => void;
+  setSubmission: (data: Partial<SubmissionState>) => void;
   reset: () => void;
 }

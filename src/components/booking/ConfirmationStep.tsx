@@ -2,7 +2,7 @@
 
 import { useBookingStore } from "@/store/booking";
 import { services } from "@/data/services";
-import { packages } from "@/data/packages";
+import { homePackages, ncPackages } from "@/data/packages";
 import { getAgentBySlug } from "@/data/agents";
 import { Button } from "@/components/ui/Button";
 import {
@@ -21,6 +21,7 @@ import {
   CalendarPlus,
   Mail,
   Download,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -101,13 +102,57 @@ const roleLabels: Record<string, string> = {
 };
 
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset, setBookingSubmitted } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset, setBookingSubmitted, submission, setSubmission } =
     useBookingStore();
 
   const [submitted, setSubmitted] = useState(false);
   const service = services.find((s) => s.id === serviceType);
-  const pkg = packages.find((p) => p.id === selectedPackage);
+  const allPackages = [...homePackages, ...ncPackages];
+  const pkg = allPackages.find((p) => p.id === selectedPackage);
   const referringAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
+
+  const handleSubmit = async () => {
+    setSubmission({ submitting: true, submitError: null });
+
+    try {
+      const res = await fetch("/api/isn/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceType,
+          packageTier: selectedPackage,
+          address,
+          contact,
+          property,
+          selectedSlot,
+          schedulerId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setSubmission({
+          submitting: false,
+          submitError: data.error || "Something went wrong. Please try again or call us.",
+        });
+        return;
+      }
+
+      setSubmission({
+        submitting: false,
+        orderId: data.orderId,
+        orderOid: data.oid,
+      });
+      setSubmitted(true);
+      setBookingSubmitted(true);
+    } catch {
+      setSubmission({
+        submitting: false,
+        submitError: "Network error. Please check your connection and try again.",
+      });
+    }
+  };
 
   const timelineSteps = [
     { icon: CheckCircle2, label: "Booking confirmed", detail: "You'll receive a text confirmation" },
@@ -403,15 +448,21 @@ export function ConfirmationStep() {
             Back
           </Button>
           <button
-            onClick={() => {
-              // TODO: POST to /api/isn/order when ready
-              setSubmitted(true);
-              setBookingSubmitted(true);
-            }}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer"
+            onClick={handleSubmit}
+            disabled={submission.submitting}
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            Submit Booking
+            {submission.submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                Submit Booking
+              </>
+            )}
           </button>
         </div>
 
@@ -422,6 +473,19 @@ export function ConfirmationStep() {
           <Phone className="w-4 h-4" />
           Or text to confirm — (855) 349-6757
         </a>
+
+        {submission.submitError && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-center max-w-md mx-auto"
+          >
+            <p className="text-sm text-red-700">{submission.submitError}</p>
+            <p className="text-xs text-red-500 mt-1">
+              Or call <a href="tel:8553496757" className="font-semibold underline">(855) 349-6757</a>
+            </p>
+          </motion.div>
+        )}
       </div>
 
       <div className="text-center mt-6">
