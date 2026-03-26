@@ -63,7 +63,7 @@ export const featureDescriptions: Record<string, string> = {
 export const homePackages: Package[] = [
   {
     id: "green",
-    name: "Green",
+    name: "Green Package",
     tagline: "Essential coverage",
     price: 545,
     priceNote: "starting at",
@@ -88,7 +88,7 @@ export const homePackages: Package[] = [
   },
   {
     id: "greener",
-    name: "Greener",
+    name: "Greener Package",
     tagline: "Complete peace of mind",
     price: 895,
     priceNote: "starting at",
@@ -104,7 +104,7 @@ export const homePackages: Package[] = [
   },
   {
     id: "greenest",
-    name: "Greenest",
+    name: "Greenest Package",
     tagline: "The full picture",
     price: 1295,
     priceNote: "starting at",
@@ -124,7 +124,7 @@ export const homePackages: Package[] = [
 export const ncPackages: Package[] = [
   {
     id: "nc1",
-    name: "Core Check",
+    name: "New Construction Package 1",
     tagline: "Essential new build coverage",
     price: 725,
     priceNote: "any size home",
@@ -145,7 +145,7 @@ export const ncPackages: Package[] = [
   },
   {
     id: "nc2",
-    name: "Build Phase",
+    name: "New Construction Package 2",
     tagline: "Full phase coverage",
     price: 1050,
     priceNote: "any size home",
@@ -160,7 +160,7 @@ export const ncPackages: Package[] = [
   },
   {
     id: "nc3",
-    name: "Total Wrap",
+    name: "New Construction Package 3",
     tagline: "Every phase, every detail",
     price: 1695,
     priceNote: "any size home",

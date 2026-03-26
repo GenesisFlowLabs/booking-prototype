@@ -173,90 +173,180 @@ export function ConfirmationStep() {
   ];
 
   if (submitted) {
+    const loc = address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : "";
+    const calTitle = `${service?.title || "Home Inspection"} - GreenWorks`;
+    const calDesc = `${service?.title || "Home Inspection"} by GreenWorks Inspections.\nPackage: ${pkg?.name || "Green"}\nContact: ${contact.firstName} ${contact.lastName} (${contact.phone})`;
+
     return (
-      <div className="max-w-2xl mx-auto text-center py-8">
+      <div className="max-w-2xl mx-auto py-8 relative overflow-hidden">
+        {/* CSS Confetti */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{
+                x: `${40 + Math.random() * 20}%`,
+                y: -20,
+                rotate: 0,
+                opacity: 1,
+              }}
+              animate={{
+                x: `${Math.random() * 100}%`,
+                y: `${80 + Math.random() * 40}%`,
+                rotate: Math.random() * 720 - 360,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 1.5 + Math.random() * 1.5,
+                delay: Math.random() * 0.5,
+                ease: "easeOut",
+              }}
+              className="absolute w-2 h-2 rounded-sm"
+              style={{
+                backgroundColor: ["#2E7D32", "#43A047", "#66BB6A", "#FFA726", "#42A5F5", "#EF5350", "#AB47BC"][i % 7],
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Success icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", damping: 12, delay: 0.1 }}
-          className="w-20 h-20 rounded-full bg-gw-green/10 flex items-center justify-center mx-auto mb-6"
+          transition={{ type: "spring", damping: 10, delay: 0.1 }}
+          className="w-24 h-24 rounded-full bg-gradient-to-br from-gw-green to-gw-green-light flex items-center justify-center mx-auto mb-6 shadow-xl shadow-gw-green/30"
         >
-          <CheckCircle2 className="w-10 h-10 text-gw-green" />
+          <CheckCircle2 className="w-12 h-12 text-white" />
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
-            You&apos;re all set!
+
+        {/* Headline */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-center">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-gray-900">
+            You&apos;re Booked!
           </h2>
-          <p className="text-gray-500 mt-3 max-w-md mx-auto">
-            We&apos;ve received your booking request. You&apos;ll get a text confirmation shortly with your appointment details.
+          <p className="text-lg text-gw-green font-semibold mt-2">
+            Great choice, {contact.firstName}.
+          </p>
+          <p className="text-gray-500 mt-2 max-w-md mx-auto">
+            You just booked with the #1 rated independently-owned inspection company in the country. We&apos;ll text you a confirmation shortly.
           </p>
         </motion.div>
 
+        {/* Appointment card */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-left max-w-sm mx-auto space-y-3"
+          className="mt-8 bg-white rounded-2xl p-6 shadow-lg border-l-4 border-gw-green max-w-md mx-auto"
         >
-          <div className="flex items-center gap-3">
-            <Wrench className="w-5 h-5 text-gw-green" />
-            <p className="text-sm font-semibold text-gray-900">{service?.title}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-gw-blue" />
-            <p className="text-sm text-gray-700">
-              {address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : `${address.zip}`}
-            </p>
-          </div>
-          {selectedSlot && (
+          <h3 className="font-heading font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">Your Appointment</h3>
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <div className="w-9 h-9 rounded-lg bg-gw-green/10 flex items-center justify-center flex-shrink-0">
+                <Wrench className="w-4 h-4 text-gw-green" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{service?.title}</p>
+                <p className="text-xs text-gray-500">{pkg?.name} - Starting at ${pkg?.price.toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-4 h-4 text-blue-600" />
+              </div>
               <p className="text-sm text-gray-700">
-                {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                {" "}at {formatTime(selectedSlot.start)}
+                {address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : `${address.zip}`}
               </p>
             </div>
-          )}
+            {selectedSlot && (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatTime(selectedSlot.start)} - {formatTime(selectedSlot.end)} &middot; {formatInspectorName(selectedSlot.inspectorName)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </motion.div>
 
+        {/* Add to calendar */}
         {selectedSlot && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.7 }}
             className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            {(() => {
-              const loc = address.street ? `${address.street}, ${address.city}, ${address.state} ${address.zip}` : "";
-              const title = `${service?.title || "Home Inspection"} - GreenWorks`;
-              const desc = `${service?.title || "Home Inspection"} by GreenWorks Inspections.\nPackage: ${pkg?.name || "Green"}\nContact: ${contact.firstName} ${contact.lastName} (${contact.phone})`;
-              return (
-                <>
-                  <a
-                    href={buildGoogleCalendarUrl(title, selectedSlot.start, selectedSlot.end, loc, desc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gw-green text-white text-sm font-semibold font-heading shadow-md hover:bg-gw-green-light transition-colors"
-                  >
-                    <CalendarPlus className="w-4 h-4" />
-                    Add to Google Calendar
-                  </a>
-                  <button
-                    onClick={() => downloadICS(buildICSFile(title, selectedSlot.start, selectedSlot.end, loc, desc), "greenworks-inspection.ics")}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 text-sm font-semibold font-heading hover:border-gw-green hover:text-gw-green transition-colors cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    Apple / Outlook (.ics)
-                  </button>
-                </>
-              );
-            })()}
+            <a
+              href={buildGoogleCalendarUrl(calTitle, selectedSlot.start, selectedSlot.end, loc, calDesc)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gw-green text-white text-sm font-semibold font-heading shadow-lg shadow-gw-green/25 hover:bg-gw-green-light transition-colors"
+            >
+              <CalendarPlus className="w-4 h-4" />
+              Add to Google Calendar
+            </a>
+            <button
+              onClick={() => downloadICS(buildICSFile(calTitle, selectedSlot.start, selectedSlot.end, loc, calDesc), "greenworks-inspection.ics")}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-gray-200 text-gray-700 text-sm font-semibold font-heading hover:border-gw-green hover:text-gw-green transition-colors cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              Apple / Outlook (.ics)
+            </button>
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-8 space-y-3">
+        {/* What happens next */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="mt-10 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 max-w-md mx-auto border border-gray-100"
+        >
+          <h3 className="font-heading font-bold text-gray-900 mb-5 text-center">What Happens Next</h3>
+          <div className="space-y-0">
+            {timelineSteps.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={step.label}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.0 + i * 0.15 }}
+                  className="flex items-start gap-4 relative"
+                >
+                  {/* Connector line */}
+                  {i < timelineSteps.length - 1 && (
+                    <div className="absolute left-[18px] top-10 w-0.5 h-6 bg-gw-green/20" />
+                  )}
+                  <div className="w-9 h-9 rounded-full bg-gw-green/10 flex items-center justify-center flex-shrink-0 z-10">
+                    <Icon className="w-4 h-4 text-gw-green" />
+                  </div>
+                  <div className="pb-6">
+                    <p className="text-sm font-semibold text-gray-800">{step.label}</p>
+                    <p className="text-xs text-gray-500">{step.detail}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Footer */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="mt-8 text-center space-y-3">
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <Shield className="w-4 h-4 text-gw-green" />
+            <p>Licensed, insured, and backed by 7,183+ five-star reviews.</p>
+          </div>
           <p className="text-sm text-gray-400">
-            Questions? Call us at <a href="tel:8553496757" className="font-semibold text-gw-green">(855) 349-6757</a>
+            Questions? Call <a href="tel:8553496757" className="font-semibold text-gw-green">(855) 349-6757</a>
           </p>
           <button
             onClick={() => { setSubmitted(false); reset(); }}
