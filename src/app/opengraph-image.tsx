@@ -1,11 +1,17 @@
 import { ImageResponse } from "next/og";
+import { readFileSync } from "fs";
+import { join } from "path";
 
-export const runtime = "edge";
 export const alt = "Book Your Home Inspection - GreenWorks Inspections";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
+  // Read logo from public directory
+  const logoPath = join(process.cwd(), "public", "gw-logo.png");
+  const logoData = readFileSync(logoPath);
+  const logoBase64 = `data:image/png;base64,${logoData.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -13,143 +19,181 @@ export default async function Image() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          background: "linear-gradient(135deg, #1a3a2a 0%, #2E7D32 50%, #1a3a2a 100%)",
+          flexDirection: "row",
+          background: "linear-gradient(145deg, #0d1f17 0%, #1a3a2a 40%, #2E7D32 100%)",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* Subtle pattern overlay */}
+        {/* Subtle grid pattern */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            opacity: 0.08,
+            opacity: 0.04,
             backgroundImage:
-              "radial-gradient(circle at 25% 25%, #ffffff 1px, transparent 1px), radial-gradient(circle at 75% 75%, #ffffff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
+              "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
             display: "flex",
           }}
         />
 
-        {/* Top bar accent */}
+        {/* Green glow accent */}
         <div
           style={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "6px",
-            background: "linear-gradient(90deg, #43A047, #66BB6A, #43A047)",
+            top: "-100px",
+            right: "-100px",
+            width: "500px",
+            height: "500px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(76,175,80,0.2) 0%, transparent 70%)",
             display: "flex",
           }}
         />
 
-        {/* Content */}
+        {/* Left side - Logo */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "380px",
+            padding: "60px",
+            flexShrink: 0,
+          }}
+        >
+          <img
+            src={logoBase64}
+            alt="GreenWorks"
+            width={260}
+            height={260}
+            style={{
+              filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.3))",
+            }}
+          />
+        </div>
+
+        {/* Right side - Content */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
             justifyContent: "center",
             flex: 1,
-            padding: "60px 80px",
-            gap: "24px",
+            padding: "50px 60px 50px 0",
+            gap: "20px",
           }}
         >
-          {/* Logo area */}
+          {/* Tagline */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "16px",
+              gap: "8px",
             }}
           >
             <div
               style={{
-                width: "64px",
-                height: "64px",
-                borderRadius: "16px",
-                backgroundColor: "rgba(255,255,255,0.15)",
+                width: "40px",
+                height: "3px",
+                backgroundColor: "#66BB6A",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "32px",
-                fontWeight: 800,
-                color: "#66BB6A",
               }}
-            >
-              GW
-            </div>
-            <div
+            />
+            <span
               style={{
-                fontSize: "28px",
+                fontSize: "16px",
                 fontWeight: 700,
-                color: "white",
-                letterSpacing: "-0.5px",
+                color: "#66BB6A",
+                textTransform: "uppercase",
+                letterSpacing: "3px",
               }}
             >
-              GreenWorks Inspections
-            </div>
+              Online Booking
+            </span>
           </div>
 
           {/* Main headline */}
           <div
             style={{
-              fontSize: "56px",
-              fontWeight: 800,
-              color: "white",
-              textAlign: "center",
-              lineHeight: 1.15,
-              maxWidth: "900px",
-              letterSpacing: "-1px",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              gap: "4px",
             }}
           >
-            <span>Book Your Home Inspection</span>
-            <span style={{ color: "#A5D6A7" }}>in Minutes, Not Hours</span>
+            <span
+              style={{
+                fontSize: "48px",
+                fontWeight: 800,
+                color: "white",
+                lineHeight: 1.1,
+                letterSpacing: "-1px",
+              }}
+            >
+              Book Your Home
+            </span>
+            <span
+              style={{
+                fontSize: "48px",
+                fontWeight: 800,
+                color: "white",
+                lineHeight: 1.1,
+                letterSpacing: "-1px",
+              }}
+            >
+              Inspection
+            </span>
+            <span
+              style={{
+                fontSize: "40px",
+                fontWeight: 700,
+                color: "#A5D6A7",
+                lineHeight: 1.2,
+                letterSpacing: "-0.5px",
+              }}
+            >
+              in Minutes
+            </span>
           </div>
 
           {/* Stats row */}
           <div
             style={{
               display: "flex",
-              gap: "40px",
-              marginTop: "16px",
+              gap: "32px",
+              marginTop: "8px",
             }}
           >
             {[
-              { value: "4.9 ★", label: "Google Rating" },
+              { value: "4.9 ★", label: "Rating" },
               { value: "7,183+", label: "Reviews" },
-              { value: "6", label: "States" },
-              { value: "#1", label: "Independent" },
+              { value: "6 States", label: "Covered" },
             ].map((stat) => (
               <div
                 key={stat.label}
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  gap: "4px",
+                  alignItems: "flex-start",
+                  gap: "2px",
                 }}
               >
                 <span
                   style={{
-                    fontSize: "28px",
+                    fontSize: "24px",
                     fontWeight: 800,
-                    color: "#A5D6A7",
+                    color: "white",
                   }}
                 >
                   {stat.value}
                 </span>
                 <span
                   style={{
-                    fontSize: "14px",
-                    color: "rgba(255,255,255,0.6)",
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.5)",
                     textTransform: "uppercase",
-                    letterSpacing: "1px",
+                    letterSpacing: "1.5px",
                     fontWeight: 600,
                   }}
                 >
@@ -159,27 +203,27 @@ export default async function Image() {
             ))}
           </div>
 
-          {/* CTA pill */}
+          {/* Domain */}
           <div
             style={{
-              marginTop: "12px",
-              padding: "12px 32px",
+              marginTop: "8px",
+              padding: "8px 20px",
               borderRadius: "999px",
-              backgroundColor: "rgba(255,255,255,0.15)",
-              border: "2px solid rgba(255,255,255,0.25)",
-              color: "white",
-              fontSize: "18px",
-              fontWeight: 700,
+              border: "1.5px solid rgba(255,255,255,0.2)",
+              color: "rgba(255,255,255,0.7)",
+              fontSize: "14px",
+              fontWeight: 600,
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              alignSelf: "flex-start",
+              gap: "6px",
             }}
           >
             greenworksinspections.com
           </div>
         </div>
 
-        {/* Bottom accent */}
+        {/* Bottom accent line */}
         <div
           style={{
             position: "absolute",
@@ -187,7 +231,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             height: "4px",
-            background: "linear-gradient(90deg, transparent, #66BB6A, transparent)",
+            background: "linear-gradient(90deg, #2E7D32, #66BB6A, #2E7D32)",
             display: "flex",
           }}
         />
