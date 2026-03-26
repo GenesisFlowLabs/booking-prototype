@@ -8,50 +8,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // ISN sends: { order_id, oid, type?, event?, ... }
-  // The event type field varies - check multiple possible keys
+  // ISN webhook payload uses "action" field with SCREAMING_SNAKE values:
+  //   ORDER_CREATED, ORDER_UPDATED, ORDER_COMPLETED, ORDER_SCHEDULED
+  // Also includes: order_id, oid, client_first, client_last, client_email,
+  //   client_mobile, address, inspector, fees, datetime, etc.
+  const action = payload.action as string | undefined;
   const orderId = payload.order_id as string | undefined;
   const oid = payload.oid as number | undefined;
-  const event = (payload.event || payload.type || payload.action || "unknown") as string;
+  const clientName = `${payload.client_first || ""} ${payload.client_last || ""}`.trim();
+  const address = payload.address as string | undefined;
 
-  // Log full payload on first few calls so we can see ISN's exact format
-  console.log(`[ISN Webhook] event=${event} order_id=${orderId} oid=${oid}`);
-  console.log(`[ISN Webhook] Full payload: ${JSON.stringify(payload)}`);
+  console.log(`[ISN Webhook] action=${action} oid=${oid} client=${clientName} address=${address}`);
 
-  switch (event) {
-    case "Order Created":
-    case "OrderCreated":
-    case "order.created":
-      console.log(`[ISN Webhook] Order ${oid} created`);
+  switch (action) {
+    case "ORDER_CREATED":
+      console.log(`[ISN Webhook] Order ${oid} created - ${clientName} at ${address}`);
       // Future: trigger SMS confirmation via Twilio/AirCall
       break;
 
-    case "Order Scheduled":
-    case "OrderScheduled":
-    case "order.scheduled":
+    case "ORDER_SCHEDULED":
       console.log(`[ISN Webhook] Order ${oid} scheduled`);
       break;
 
-    case "Order Updated":
-    case "OrderUpdated":
-    case "order.updated":
+    case "ORDER_UPDATED":
       console.log(`[ISN Webhook] Order ${oid} updated`);
       break;
 
-    case "Order Completed":
-    case "OrderCompleted":
-    case "order.completed":
+    case "ORDER_COMPLETED":
       console.log(`[ISN Webhook] Order ${oid} completed`);
       break;
 
-    case "Order Canceled":
-    case "OrderCanceled":
-    case "order.canceled":
+    case "ORDER_CANCELED":
       console.log(`[ISN Webhook] Order ${oid} canceled`);
       break;
 
     default:
-      console.log(`[ISN Webhook] Unhandled event: ${event}`);
+      console.log(`[ISN Webhook] Unhandled action: ${action}`);
+      console.log(`[ISN Webhook] Full payload: ${JSON.stringify(payload)}`);
   }
 
   // Always return 200 so ISN doesn't retry
