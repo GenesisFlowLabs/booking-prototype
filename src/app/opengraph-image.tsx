@@ -166,7 +166,7 @@ export default async function Image() {
             }}
           >
             {[
-              { value: "4.9 ★", label: "Rating" },
+              { value: "4.9 Stars", label: "Rating" },
               { value: "7,183+", label: "Reviews" },
               { value: "6 States", label: "Covered" },
             ].map((stat) => (
