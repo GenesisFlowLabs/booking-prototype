@@ -362,8 +362,15 @@ export function ConfirmationStep() {
           <div>
             <p className="text-xs text-gray-400 font-medium">PACKAGE</p>
             <p className="font-semibold text-gray-900">
-              {pkg?.name || "Green"} — Starting at ${pkg?.price.toLocaleString() || "545"}
+              {pkg?.name || "Green"} — {selectedSlot?.quote
+                ? `$${selectedSlot.quote.toLocaleString()}`
+                : `Starting at $${pkg?.price.toLocaleString() || "545"}`}
             </p>
+            {selectedSlot?.quote && pkg?.price && selectedSlot.quote !== pkg.price && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Base package price: ${pkg.price.toLocaleString()} (adjusted for property size/location)
+              </p>
+            )}
           </div>
         </div>
 
