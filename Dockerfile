@@ -9,8 +9,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_GOOGLE_MAPS_KEY
-ENV NEXT_PUBLIC_GOOGLE_MAPS_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_KEY
+# Next.js reads NEXT_PUBLIC_* vars from .env.local at build time
 RUN npm run build
 
 FROM base AS runner
