@@ -11,6 +11,7 @@ interface ButtonProps {
   disabled?: boolean;
   className?: string;
   type?: "button" | "submit";
+  pulse?: boolean;
 }
 
 const variants = {
@@ -34,11 +35,14 @@ export function Button({
   disabled = false,
   className = "",
   type = "button",
+  pulse = false,
 }: ButtonProps) {
   return (
     <motion.button
       whileHover={disabled ? {} : { scale: 1.02 }}
       whileTap={disabled ? {} : { scale: 0.98 }}
+      animate={pulse && !disabled ? { scale: [1, 1.05, 1] } : {}}
+      transition={pulse && !disabled ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
       type={type}
       onClick={onClick}
       disabled={disabled}
@@ -46,6 +50,7 @@ export function Button({
         inline-flex items-center justify-center gap-2 rounded-full font-heading font-semibold
         transition-colors duration-200 cursor-pointer
         disabled:opacity-50 disabled:cursor-not-allowed
+        ${pulse && !disabled ? "ring-2 ring-gw-green/40 ring-offset-2" : ""}
         ${variants[variant]} ${sizes[size]} ${className}
       `}
     >

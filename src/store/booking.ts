@@ -14,6 +14,7 @@ const initialContact = {
 
 const initialProperty = {
   sqft: "",
+  foundation: "unknown" as const,
 };
 
 export const useBookingStore = create<BookingState>()(

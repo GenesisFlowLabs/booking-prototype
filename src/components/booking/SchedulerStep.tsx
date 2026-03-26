@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useBookingStore } from "@/store/booking";
 import { Button } from "@/components/ui/Button";
 import {
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ISNTimeSlot, SelectedSlot } from "@/types/booking";
+import { homePackages, ncPackages } from "@/data/packages";
 import { getISNMarketTags } from "@/data/service-areas";
 
 interface AvailabilityData {
@@ -63,8 +64,11 @@ function filterSlotsByMarket(
 }
 
 export function SchedulerStep() {
-  const { nextStep, prevStep, selectedPackage, address, selectedSlot, setSelectedSlot } =
+  const { nextStep, prevStep, selectedPackage, address, selectedSlot, setSelectedSlot, serviceType } =
     useBookingStore();
+
+  const allPackages = [...homePackages, ...ncPackages];
+  const pkg = allPackages.find((p) => p.id === selectedPackage);
 
   const marketTags = useMemo(() => getISNMarketTags(address.zip), [address.zip]);
 
@@ -73,6 +77,9 @@ export function SchedulerStep() {
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
+
+  const continueRef = useRef<HTMLDivElement>(null);
+  const timeSlotsRef = useRef<HTMLDivElement>(null);
 
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -151,6 +158,24 @@ export function SchedulerStep() {
     );
   }, [slotsForDate]);
 
+  // Auto-scroll to time slots when date is selected
+  useEffect(() => {
+    if (selectedDate && timeSlotsRef.current) {
+      setTimeout(() => {
+        timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 200);
+    }
+  }, [selectedDate]);
+
+  // Auto-scroll to Continue when slot is selected
+  useEffect(() => {
+    if (selectedSlot && continueRef.current) {
+      setTimeout(() => {
+        continueRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [selectedSlot]);
+
   const handleSlotSelect = (slot: ISNTimeSlot) => {
     const date = slot.start.split(" ")[0];
     const inspector = slot.inspectors[0];
@@ -190,7 +215,7 @@ export function SchedulerStep() {
         <Calendar className="w-5 h-5 text-gw-green flex-shrink-0" />
         <p className="text-sm text-gray-700">
           You&apos;re scheduling a{" "}
-          <strong className="text-gw-green capitalize">{selectedPackage}</strong>{" "}
+          <strong className="text-gw-green">{pkg?.name || selectedPackage}</strong>{" "}
           package inspection.
         </p>
       </div>
@@ -290,7 +315,7 @@ export function SchedulerStep() {
         </div>
 
         {/* Time slots panel */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2" ref={timeSlotsRef}>
           <AnimatePresence mode="wait">
             {!selectedDate ? (
               <motion.div
@@ -381,14 +406,7 @@ export function SchedulerStep() {
                           )}
                         </div>
 
-                        {slot.quote > 0 && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            <span className="font-medium text-gw-green">
-                              ${slot.quote.toLocaleString()}
-                            </span>
-                            <span className="ml-1">estimated</span>
-                          </div>
-                        )}
+                        {/* Quote hidden per Jordan — pricing shown as ranges on package step */}
                       </button>
                     );
                   })}
@@ -464,12 +482,12 @@ export function SchedulerStep() {
         )}
       </AnimatePresence>
 
-      <div className="flex items-center justify-between mt-8">
+      <div ref={continueRef} className="flex items-center justify-between mt-8">
         <Button onClick={prevStep} variant="ghost">
           <ArrowLeft className="w-5 h-5" />
           Back
         </Button>
-        <Button onClick={nextStep} disabled={!canProceed} size="lg">
+        <Button onClick={nextStep} disabled={!canProceed} size="lg" pulse={canProceed}>
           Continue
           <ArrowRight className="w-5 h-5" />
         </Button>

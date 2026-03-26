@@ -33,10 +33,15 @@ export function BookingFlow() {
   const prevStepRef = useRef(currentStep);
 
   // Scroll to top of booking flow on step change
+  // Delay allows hero collapse animation (400ms) to finish before scrolling
   useEffect(() => {
     if (currentStep !== prevStepRef.current) {
+      const wasStep1 = prevStepRef.current === 1;
       prevStepRef.current = currentStep;
-      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const delay = wasStep1 ? 450 : 50;
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, delay);
     }
   }, [currentStep]);
 

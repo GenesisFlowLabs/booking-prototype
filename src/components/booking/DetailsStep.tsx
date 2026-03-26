@@ -8,7 +8,7 @@ import { validateZip, serviceAreas } from "@/data/service-areas";
 import { ArrowRight, ArrowLeft, MapPin, CheckCircle2, XCircle, User, Home, Briefcase, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
-import type { ContactRole } from "@/types/booking";
+import type { ContactRole, FoundationType } from "@/types/booking";
 
 const roles: { id: ContactRole; label: string; icon: React.ElementType }[] = [
   { id: "buyer", label: "Home Buyer", icon: User },
@@ -34,6 +34,7 @@ export function DetailsStep() {
   const [sqftLoading, setSqftLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const firstErrorRef = useRef<HTMLDivElement>(null);
+  const continueRef = useRef<HTMLDivElement>(null);
 
   const lookupProperty = useCallback(async (street: string, city: string, state: string, zip: string) => {
     const full = `${street}, ${city}, ${state} ${zip}`;
@@ -111,6 +112,16 @@ export function DetailsStep() {
   if (!contact.lastName.trim()) missingFields.push("Last name");
   if (!contact.email.trim()) missingFields.push("Email");
   if (!contact.phone.trim()) missingFields.push("Phone");
+
+  // Auto-scroll to Continue when form is complete
+  useEffect(() => {
+    if (canProceed) {
+      const timer = setTimeout(() => {
+        continueRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [canProceed]);
 
   const handleContinue = () => {
     if (canProceed) {
@@ -283,6 +294,41 @@ export function DetailsStep() {
         <p className="text-xs text-gray-400 -mt-2">
           {property.sqft ? "Auto-filled from public records. You can adjust if needed." : "Helps us provide a more accurate quote. Optional."}
         </p>
+
+        {/* Foundation type */}
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-gray-700 font-heading">
+            Foundation Type
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { id: "slab" as FoundationType, label: "Slab" },
+              { id: "pier-beam" as FoundationType, label: "Pier & Beam" },
+              { id: "unknown" as FoundationType, label: "Not Sure" },
+            ]).map((f) => {
+              const isSelected = property.foundation === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setProperty({ foundation: f.id })}
+                  className={`
+                    flex items-center justify-center p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 cursor-pointer
+                    ${isSelected
+                      ? "border-gw-green bg-gw-green/5 text-gw-green"
+                      : "border-gray-200 text-gray-500 hover:border-gw-green/40"
+                    }
+                  `}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-gray-400">
+            Pier &amp; beam homes require additional crawlspace inspection time.
+          </p>
+        </div>
       </div>
 
       {/* Contact Section */}
@@ -356,7 +402,12 @@ export function DetailsStep() {
           value={contact.phone}
           onChange={(v) => {
             // Auto-format: (555) 123-4567
-            const digits = v.replace(/\D/g, "").slice(0, 10);
+            // Strip +1 country code prefix if present (from autofill)
+            let raw = v.replace(/\D/g, "");
+            if (raw.length === 11 && raw.startsWith("1")) {
+              raw = raw.slice(1);
+            }
+            const digits = raw.slice(0, 10);
             let formatted = digits;
             if (digits.length > 6) {
               formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -394,12 +445,12 @@ export function DetailsStep() {
         )}
       </AnimatePresence>
 
-      <div className="flex items-center justify-between mt-8">
+      <div ref={continueRef} className="flex items-center justify-between mt-8">
         <Button onClick={prevStep} variant="ghost">
           <ArrowLeft className="w-5 h-5" />
           Back
         </Button>
-        <Button onClick={handleContinue} size="lg">
+        <Button onClick={handleContinue} size="lg" pulse={canProceed}>
           Continue
           <ArrowRight className="w-5 h-5" />
         </Button>

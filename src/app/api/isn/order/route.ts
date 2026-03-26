@@ -26,6 +26,7 @@ interface OrderRequestBody {
   };
   property: {
     sqft: string;
+    foundation: string;
   };
   selectedSlot: {
     start: string;
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   // Build ISN order payload
   const clientName = `${contact.firstName} ${contact.lastName}`;
-  const notes = buildOrderNotes(packageTier, property.sqft, contact.role);
+  const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation);
   const notesWithRef = schedulerId
     ? `${notes} | Referred by agent: ${schedulerId}`
     : notes;

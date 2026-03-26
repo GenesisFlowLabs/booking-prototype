@@ -54,7 +54,8 @@ export function getISNOrderTypeId(
 export function buildOrderNotes(
   packageTier: PackageTier | null,
   sqft: string,
-  contactRole: string | null
+  contactRole: string | null,
+  foundation?: string
 ): string {
   const parts: string[] = [];
   parts.push("Booked via GreenWorks Online Scheduler");
@@ -63,6 +64,13 @@ export function buildOrderNotes(
   }
   if (sqft) {
     parts.push(`Approx. Sq Ft: ${parseInt(sqft).toLocaleString()}`);
+  }
+  if (foundation && foundation !== "unknown") {
+    const labels: Record<string, string> = {
+      "slab": "Slab",
+      "pier-beam": "Pier & Beam",
+    };
+    parts.push(`Foundation: ${labels[foundation] || foundation}`);
   }
   if (contactRole) {
     const labels: Record<string, string> = {

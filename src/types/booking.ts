@@ -126,8 +126,11 @@ export interface ContactInfo {
   phone: string;
 }
 
+export type FoundationType = "slab" | "pier-beam" | "unknown";
+
 export interface PropertyInfo {
   sqft: string;
+  foundation: FoundationType;
 }
 
 // --- Booking State ---

@@ -2,20 +2,20 @@ import { ServiceOption } from "@/types/booking";
 
 export const services: ServiceOption[] = [
   {
+    id: "new-construction",
+    title: "New Construction Inspections",
+    description: "Phase inspections for new builds — pre-drywall, final, and full-wrap coverage.",
+    startingPrice: 725,
+    priceHigh: 1695,
+    icon: "Building2",
+  },
+  {
     id: "home",
     title: "Pre-Owned Home Inspections",
     description: "Complete evaluation of your home's condition — structure, systems, safety.",
     startingPrice: 545,
-    priceHigh: 1195,
+    priceHigh: 1295,
     icon: "Home",
-  },
-  {
-    id: "new-construction",
-    title: "New Construction Inspections",
-    description: "Phase inspections for new builds — pre-pour, pre-drywall, and final.",
-    startingPrice: 495,
-    priceHigh: 1100,
-    icon: "Building2",
   },
   {
     id: "engineering",

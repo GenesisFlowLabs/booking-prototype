@@ -23,7 +23,7 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function formatTime(datetime: string): string {
@@ -106,7 +106,18 @@ export function ConfirmationStep() {
     useBookingStore();
 
   const [submitted, setSubmitted] = useState(false);
+  const submitRef = useRef<HTMLDivElement>(null);
   const service = services.find((s) => s.id === serviceType);
+
+  // Auto-scroll to submit button after review renders
+  useEffect(() => {
+    if (!submitted) {
+      const timer = setTimeout(() => {
+        submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [submitted]);
   const allPackages = [...homePackages, ...ncPackages];
   const pkg = allPackages.find((p) => p.id === selectedPackage);
   const referringAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
@@ -362,15 +373,11 @@ export function ConfirmationStep() {
           <div>
             <p className="text-xs text-gray-400 font-medium">PACKAGE</p>
             <p className="font-semibold text-gray-900">
-              {pkg?.name || "Green"} — {selectedSlot?.quote
-                ? `$${selectedSlot.quote.toLocaleString()}`
-                : `Starting at $${pkg?.price.toLocaleString() || "545"}`}
+              {pkg?.name || "Green"} — Starting at ${pkg?.price.toLocaleString() || "545"}
             </p>
-            {selectedSlot?.quote && pkg?.price && selectedSlot.quote !== pkg.price && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                Base package price: ${pkg.price.toLocaleString()} (adjusted for property size/location)
-              </p>
-            )}
+            <p className="text-xs text-gray-400 mt-0.5">
+              Final pricing confirmed after submission based on property details.
+            </p>
           </div>
         </div>
 
@@ -448,7 +455,7 @@ export function ConfirmationStep() {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col items-center gap-4 mt-8">
+      <div ref={submitRef} className="flex flex-col items-center gap-4 mt-8">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <Button onClick={prevStep} variant="ghost">
             <ArrowLeft className="w-5 h-5" />
@@ -457,7 +464,7 @@ export function ConfirmationStep() {
           <button
             onClick={handleSubmit}
             disabled={submission.submitting}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold font-heading bg-gw-green text-white hover:bg-gw-green-light transition-colors shadow-lg shadow-gw-green/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed animate-pulse-subtle ring-2 ring-gw-green/30 ring-offset-2"
           >
             {submission.submitting ? (
               <>
