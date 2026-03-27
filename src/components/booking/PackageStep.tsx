@@ -91,14 +91,6 @@ export function PackageStep() {
                   {pkg.name}
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">{pkg.tagline}</p>
-                <div className="mt-3">
-                  <span className="text-xs text-gray-400 block">
-                    {pkg.priceNote === "any size home" ? "Any size home" : "Starting at"}
-                  </span>
-                  <span className={`font-heading font-bold gradient-text-green ${isPopular ? "text-4xl" : "text-3xl"}`}>
-                    ${pkg.price.toLocaleString()}
-                  </span>
-                </div>
                 {isPopular && (
                   <div className="flex items-center justify-center gap-1.5 mt-3 text-[11px] text-amber-600 font-semibold">
                     <Shield className="w-3.5 h-3.5" />
@@ -146,6 +138,16 @@ export function PackageStep() {
                     );
                   })}
                 </ul>
+              </div>
+
+              {/* Price - below features */}
+              <div className={`px-4 md:px-5 pb-3 pt-2 border-t ${isSelected ? "border-gw-green/20" : isPopular ? "border-amber-200" : "border-gray-100"} text-center`}>
+                <span className="text-xs text-gray-400 block">
+                  {pkg.priceNote === "any size home" ? "Any size home" : "Starting at"}
+                </span>
+                <span className={`font-heading font-bold gradient-text-green ${isPopular ? "text-4xl" : "text-3xl"}`}>
+                  ${pkg.price.toLocaleString()}
+                </span>
               </div>
 
               {/* Select button */}

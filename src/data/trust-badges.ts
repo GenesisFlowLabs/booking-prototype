@@ -5,7 +5,7 @@ export const trustBadges: TrustBadge[] = [
   { id: "bbb", name: "BBB", value: "A+ Rating" },
   { id: "inc5000", name: "Inc. 5000", value: "Fastest Growing" },
   { id: "internachi", name: "InterNACHI", value: "Certified" },
-  { id: "ashi", name: "ASHI", value: "Member" },
+  { id: "ashi", name: "ASHI", value: "Certified" },
 ];
 
 export const stats = [

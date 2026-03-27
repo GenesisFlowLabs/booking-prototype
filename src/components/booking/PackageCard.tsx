@@ -64,25 +64,8 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
         {pkg.tagline}
       </p>
 
-      {/* Price */}
-      <div className="mt-4 mb-5">
-        {pkg.priceNote === "starting at" && (
-          <span className="text-xs font-medium block mb-0.5 text-gray-400">
-            Starting at
-          </span>
-        )}
-        {pkg.priceNote === "any size home" && (
-          <span className="text-xs font-medium block mb-0.5 text-gray-400">
-            Any size home
-          </span>
-        )}
-        <span className="text-3xl md:text-4xl font-heading font-bold gradient-text-green">
-          ${pkg.price.toLocaleString()}
-        </span>
-      </div>
-
       {/* Features */}
-      <ul className="space-y-2.5">
+      <ul className="mt-5 space-y-2.5">
         {pkg.features.map((feature, i) => {
           const desc = featureDescriptions[feature];
           return (
@@ -107,6 +90,23 @@ export function PackageCard({ pkg, selected, onSelect }: PackageCardProps) {
           );
         })}
       </ul>
+
+      {/* Price - below features so prospects read offerings first */}
+      <div className="mt-6 pt-5 border-t border-gray-100">
+        {pkg.priceNote === "starting at" && (
+          <span className="text-xs font-medium block mb-0.5 text-gray-400">
+            Starting at
+          </span>
+        )}
+        {pkg.priceNote === "any size home" && (
+          <span className="text-xs font-medium block mb-0.5 text-gray-400">
+            Any size home
+          </span>
+        )}
+        <span className="text-3xl md:text-4xl font-heading font-bold gradient-text-green">
+          ${pkg.price.toLocaleString()}
+        </span>
+      </div>
     </motion.button>
   );
 }

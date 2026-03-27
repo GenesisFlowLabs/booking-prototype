@@ -588,8 +588,11 @@ export function ConfirmationStep() {
           className="inline-flex items-center gap-2 text-sm font-semibold text-gw-green hover:text-gw-green-dark transition-colors"
         >
           <Phone className="w-4 h-4" />
-          Or text to confirm — (855) 349-6757
+          Text to confirm — (855) 349-6757
         </a>
+        <p className="text-xs text-gray-400 mt-1">
+          Mon-Sat 7am-7pm CST
+        </p>
 
         {submission.submitError && (
           <motion.div
