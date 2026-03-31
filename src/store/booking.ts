@@ -32,6 +32,7 @@ export const useBookingStore = create<BookingState>()(
       property: { ...initialProperty },
       selectedSlot: null,
       schedulerId: null,
+      referringAgent: null,
       bookingSubmitted: false,
       submission: {
         submitting: false,
@@ -65,6 +66,7 @@ export const useBookingStore = create<BookingState>()(
       setSelectedSlot: (slot) => set({ selectedSlot: slot }),
       setSchedulerId: (id) => set({ schedulerId: id }),
       setBookingSubmitted: (submitted) => set({ bookingSubmitted: submitted }),
+      setReferringAgent: (agent) => set({ referringAgent: agent }),
       setSubmission: (data) =>
         set((s) => ({ submission: { ...s.submission, ...data } })),
       reset: () =>
@@ -80,6 +82,7 @@ export const useBookingStore = create<BookingState>()(
           contact: { ...initialContact },
           property: { ...initialProperty },
           selectedSlot: null,
+          referringAgent: null,
           bookingSubmitted: false,
           submission: {
             submitting: false,

@@ -102,7 +102,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, prevStep, reset, setBookingSubmitted, submission, setSubmission } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, referringAgent, prevStep, reset, setBookingSubmitted, submission, setSubmission } =
     useBookingStore();
 
   const [submitted, setSubmitted] = useState(false);
@@ -124,7 +124,7 @@ export function ConfirmationStep() {
   }, [submitted]);
   const allPackages = [...homePackages, ...ncPackages];
   const pkg = allPackages.find((p) => p.id === selectedPackage);
-  const referringAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
+  const schedulerAgent = schedulerId ? getAgentBySlug(schedulerId) : undefined;
 
   const handleSubmit = async () => {
     setSubmission({ submitting: true, submitError: null });
@@ -141,6 +141,7 @@ export function ConfirmationStep() {
           property,
           selectedSlot,
           schedulerId,
+          referringAgent,
         }),
       });
 
@@ -453,7 +454,7 @@ export function ConfirmationStep() {
         </div>
 
         {/* Referring Agent */}
-        {referringAgent && (
+        {(referringAgent || schedulerAgent) && (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gw-green/10 flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-gw-green" />
@@ -461,8 +462,13 @@ export function ConfirmationStep() {
             <div>
               <p className="text-xs text-gray-400 font-medium">REFERRED BY</p>
               <p className="font-semibold text-gray-900">
-                {referringAgent.name}
-                <span className="text-gray-400 font-normal">, {referringAgent.company}</span>
+                {referringAgent?.name || schedulerAgent?.name}
+                {(referringAgent?.agency || schedulerAgent?.company) && (
+                  <span className="text-gray-400 font-normal">, {referringAgent?.agency || schedulerAgent?.company}</span>
+                )}
+                {referringAgent?.isNew && (
+                  <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">New Agent</span>
+                )}
               </p>
             </div>
           </div>

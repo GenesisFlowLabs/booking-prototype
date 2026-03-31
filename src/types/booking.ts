@@ -128,6 +128,15 @@ export interface ContactInfo {
 
 export type FoundationType = "slab" | "pier-beam" | "unknown";
 
+export interface ReferringAgent {
+  id: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  agency: string;
+  isNew: boolean;
+}
+
 export interface PropertyInfo {
   sqft: string;
   foundation: FoundationType;
@@ -163,6 +172,9 @@ export interface BookingState {
   // Submission state (hides step indicator on success screen)
   bookingSubmitted: boolean;
 
+  // Agent referral
+  referringAgent: ReferringAgent | null;
+
   // Order submission
   submission: SubmissionState;
 
@@ -180,6 +192,7 @@ export interface BookingState {
   setSelectedSlot: (slot: SelectedSlot | null) => void;
   setSchedulerId: (id: string | null) => void;
   setBookingSubmitted: (submitted: boolean) => void;
+  setReferringAgent: (agent: ReferringAgent | null) => void;
   setSubmission: (data: Partial<SubmissionState>) => void;
   reset: () => void;
 }

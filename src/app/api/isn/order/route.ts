@@ -36,6 +36,14 @@ interface OrderRequestBody {
     quote: number;
   } | null;
   schedulerId: string | null;
+  referringAgent: {
+    id: string | null;
+    name: string;
+    email: string;
+    phone: string;
+    agency: string;
+    isNew: boolean;
+  } | null;
 }
 
 export async function POST(req: NextRequest) {
@@ -46,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { serviceType, packageTier, address, contact, property, selectedSlot, schedulerId } = body;
+  const { serviceType, packageTier, address, contact, property, selectedSlot, schedulerId, referringAgent } = body;
 
   // Validate required fields
   if (!address.street || !address.city || !address.state || !address.zip) {
@@ -62,9 +70,14 @@ export async function POST(req: NextRequest) {
   // Build ISN order payload
   const clientName = `${contact.firstName} ${contact.lastName}`;
   const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation);
-  const notesWithRef = schedulerId
-    ? `${notes} | Referred by agent: ${schedulerId}`
-    : notes;
+  let notesWithRef = notes;
+  if (referringAgent) {
+    const agentLabel = referringAgent.isNew ? `NEW AGENT: ${referringAgent.name}` : `Agent: ${referringAgent.name}`;
+    const agencyLabel = referringAgent.agency ? ` (${referringAgent.agency})` : "";
+    notesWithRef = `${notes} | ${agentLabel}${agencyLabel}`;
+  } else if (schedulerId) {
+    notesWithRef = `${notes} | Referred by agent link: ${schedulerId}`;
+  }
 
   const isnPayload: Record<string, unknown> = {
     datetime: selectedSlot.start,
@@ -83,8 +96,19 @@ export async function POST(req: NextRequest) {
     area: property.sqft || undefined,
   };
 
-  // If contact is a buyer's agent, also set the agent field
-  if (contact.role === "agent") {
+  // Set agent field from referral or if contact is a buyer's agent
+  if (referringAgent && referringAgent.id) {
+    // Known ISN agent — pass their ID
+    isnPayload.agentId = referringAgent.id;
+  } else if (referringAgent && referringAgent.name) {
+    // New agent — pass name/contact info
+    isnPayload.agent = {
+      name: referringAgent.name,
+      email: referringAgent.email || undefined,
+      mobile: referringAgent.phone || undefined,
+    };
+  } else if (contact.role === "agent") {
+    // Contact IS the agent
     isnPayload.agent = {
       name: clientName,
       email: contact.email || undefined,

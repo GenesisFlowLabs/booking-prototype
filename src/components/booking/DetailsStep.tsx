@@ -5,7 +5,8 @@ import { useBookingStore } from "@/store/booking";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { validateZip, serviceAreas } from "@/data/service-areas";
-import { ArrowRight, ArrowLeft, MapPin, CheckCircle2, XCircle, User, Home, Briefcase, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, MapPin, CheckCircle2, XCircle, User, Home, Briefcase, Loader2, UserPlus, Search, X } from "lucide-react";
+import type { ReferringAgent } from "@/types/booking";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import type { ContactRole, FoundationType } from "@/types/booking";
@@ -26,6 +27,8 @@ export function DetailsStep() {
     setContact,
     property,
     setProperty,
+    referringAgent,
+    setReferringAgent,
     nextStep,
     prevStep,
   } = useBookingStore();
@@ -35,6 +38,73 @@ export function DetailsStep() {
   const [showErrors, setShowErrors] = useState(false);
   const firstErrorRef = useRef<HTMLDivElement>(null);
   const continueRef = useRef<HTMLDivElement>(null);
+
+  // Agent referral search
+  const [showAgentSearch, setShowAgentSearch] = useState(!!referringAgent);
+  const [agentQuery, setAgentQuery] = useState(referringAgent?.name || "");
+  const [agentResults, setAgentResults] = useState<ReferringAgent[]>([]);
+  const [agentSearching, setAgentSearching] = useState(false);
+  const agentDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const searchAgents = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setAgentResults([]);
+      return;
+    }
+    setAgentSearching(true);
+    try {
+      const res = await fetch(`/api/isn/agents?search=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setAgentResults(data.map((a: { id: string; name: string; email: string; phone: string; agency: string }) => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          phone: a.phone,
+          agency: a.agency,
+          isNew: false,
+        })));
+      }
+    } catch {
+      setAgentResults([]);
+    } finally {
+      setAgentSearching(false);
+    }
+  }, []);
+
+  const handleAgentQueryChange = useCallback((val: string) => {
+    setAgentQuery(val);
+    setReferringAgent(null);
+    if (agentDebounceRef.current) clearTimeout(agentDebounceRef.current);
+    agentDebounceRef.current = setTimeout(() => searchAgents(val), 300);
+  }, [searchAgents, setReferringAgent]);
+
+  const selectAgent = useCallback((agent: ReferringAgent) => {
+    setReferringAgent(agent);
+    setAgentQuery(agent.name);
+    setAgentResults([]);
+  }, [setReferringAgent]);
+
+  const markAsNewAgent = useCallback(() => {
+    if (agentQuery.trim()) {
+      setReferringAgent({
+        id: null,
+        name: agentQuery.trim(),
+        email: "",
+        phone: "",
+        agency: "",
+        isNew: true,
+      });
+      setAgentResults([]);
+    }
+  }, [agentQuery, setReferringAgent]);
+
+  const clearAgent = useCallback(() => {
+    setReferringAgent(null);
+    setAgentQuery("");
+    setAgentResults([]);
+    setShowAgentSearch(false);
+  }, [setReferringAgent]);
 
   const lookupProperty = useCallback(async (street: string, city: string, state: string, zip: string) => {
     const full = `${street}, ${city}, ${state} ${zip}`;
@@ -414,6 +484,123 @@ export function DetailsStep() {
           autoComplete="tel"
           required
         />
+      </div>
+
+      {/* Agent Referral */}
+      <div className="mt-6 pt-5 border-t border-gray-100">
+        {!showAgentSearch ? (
+          <button
+            type="button"
+            onClick={() => setShowAgentSearch(true)}
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gw-green transition-colors cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            Were you referred by an agent?
+          </button>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-gray-700 font-heading">
+                Referring Agent
+              </label>
+              <button
+                type="button"
+                onClick={clearAgent}
+                className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+
+            {referringAgent ? (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gw-green/5 border-2 border-gw-green">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gw-green/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-gw-green" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {referringAgent.name}
+                      {referringAgent.isNew && (
+                        <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                          New Agent
+                        </span>
+                      )}
+                    </p>
+                    {referringAgent.agency && (
+                      <p className="text-xs text-gray-500">{referringAgent.agency}</p>
+                    )}
+                    {referringAgent.email && (
+                      <p className="text-xs text-gray-400">{referringAgent.email}</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearAgent}
+                  className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={agentQuery}
+                    onChange={(e) => handleAgentQueryChange(e.target.value)}
+                    placeholder="Start typing agent name..."
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-gw-green focus:ring-gw-green/20"
+                    autoComplete="off"
+                  />
+                  {agentSearching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                  )}
+                </div>
+
+                {/* Results dropdown */}
+                {agentResults.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg max-h-48 overflow-y-auto">
+                    {agentResults.map((agent) => (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => selectAgent(agent)}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0"
+                      >
+                        <p className="text-sm font-semibold text-gray-900">{agent.name}</p>
+                        {agent.agency && (
+                          <p className="text-xs text-gray-500">{agent.agency}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* "Not found" option */}
+                {agentQuery.length >= 2 && !agentSearching && agentResults.length === 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={markAsNewAgent}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      <p className="text-sm text-gray-700">
+                        Agent not found — add <strong>&ldquo;{agentQuery}&rdquo;</strong> as new agent
+                      </p>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       <AnimatePresence>
