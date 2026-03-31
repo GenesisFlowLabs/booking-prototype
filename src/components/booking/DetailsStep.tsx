@@ -39,6 +39,12 @@ export function DetailsStep() {
   const firstErrorRef = useRef<HTMLDivElement>(null);
   const continueRef = useRef<HTMLDivElement>(null);
 
+  // Contact field refs for auto-advance
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+
   // Agent referral search
   const [showAgentSearch, setShowAgentSearch] = useState(!!referringAgent);
   const [agentQuery, setAgentQuery] = useState(referringAgent?.name || "");
@@ -98,6 +104,16 @@ export function DetailsStep() {
       setAgentResults([]);
     }
   }, [agentQuery, setReferringAgent]);
+
+  // Auto-focus next empty contact field
+  const focusNextEmpty = useCallback(() => {
+    setTimeout(() => {
+      if (!contact.firstName && firstNameRef.current) { firstNameRef.current.focus(); return; }
+      if (!contact.lastName && lastNameRef.current) { lastNameRef.current.focus(); return; }
+      if (!contact.email && emailRef.current) { emailRef.current.focus(); return; }
+      if (!contact.phone && phoneRef.current) { phoneRef.current.focus(); return; }
+    }, 100);
+  }, [contact.firstName, contact.lastName, contact.email, contact.phone]);
 
   const clearAgent = useCallback(() => {
     setReferringAgent(null);
@@ -411,7 +427,7 @@ export function DetailsStep() {
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => setContact({ role: r.id })}
+                  onClick={() => { setContact({ role: r.id }); focusNextEmpty(); }}
                   className={`
                     flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 cursor-pointer
                     ${isSelected
@@ -432,17 +448,25 @@ export function DetailsStep() {
           <Input
             label="First Name"
             value={contact.firstName}
-            onChange={(v) => setContact({ firstName: v })}
+            onChange={(v) => {
+              setContact({ firstName: v });
+              if (v && !contact.lastName) setTimeout(() => lastNameRef.current?.focus(), 50);
+            }}
             placeholder="Jordan"
             autoComplete="given-name"
+            inputRef={(el) => { firstNameRef.current = el; }}
             required
           />
           <Input
             label="Last Name"
             value={contact.lastName}
-            onChange={(v) => setContact({ lastName: v })}
+            onChange={(v) => {
+              setContact({ lastName: v });
+              if (v && !contact.email) setTimeout(() => emailRef.current?.focus(), 50);
+            }}
             placeholder="Vanover"
             autoComplete="family-name"
+            inputRef={(el) => { lastNameRef.current = el; }}
             required
           />
         </div>
@@ -450,10 +474,14 @@ export function DetailsStep() {
         <Input
           label="Email"
           value={contact.email}
-          onChange={(v) => setContact({ email: v })}
+          onChange={(v) => {
+            setContact({ email: v });
+            if (v && v.includes("@") && !contact.phone) setTimeout(() => phoneRef.current?.focus(), 50);
+          }}
           placeholder="jordan@example.com"
           type="email"
           autoComplete="email"
+          inputRef={(el) => { emailRef.current = el; }}
           required
         />
 
@@ -482,6 +510,7 @@ export function DetailsStep() {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
+          inputRef={(el) => { phoneRef.current = el; }}
           required
         />
       </div>
