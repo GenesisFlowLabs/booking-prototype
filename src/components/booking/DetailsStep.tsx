@@ -487,16 +487,28 @@ export function DetailsStep() {
       </div>
 
       {/* Agent Referral */}
-      <div className="mt-6 pt-5 border-t border-gray-100">
+      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 mt-5">
         {!showAgentSearch ? (
-          <button
+          <motion.button
             type="button"
             onClick={() => setShowAgentSearch(true)}
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gw-green transition-colors cursor-pointer"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full flex items-center gap-4 cursor-pointer group"
           >
-            <UserPlus className="w-4 h-4" />
-            Were you referred by an agent?
-          </button>
+            <div className="w-12 h-12 rounded-xl bg-gw-green/10 flex items-center justify-center flex-shrink-0 group-hover:bg-gw-green/20 transition-colors">
+              <UserPlus className="w-6 h-6 text-gw-green" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="font-heading font-bold text-gray-900 group-hover:text-gw-green transition-colors">
+                Were you referred by an agent?
+              </p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Let us know so we can thank them
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-gw-green transition-colors" />
+          </motion.button>
         ) : (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
