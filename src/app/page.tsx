@@ -14,17 +14,35 @@ import { Shield, Star, Award } from "lucide-react";
 function SchedulerCapture() {
   const searchParams = useSearchParams();
   const setSchedulerId = useBookingStore((s) => s.setSchedulerId);
+  const setVIPAgent = useBookingStore((s) => s.setVIPAgent);
 
   useEffect(() => {
-    // ?ref= is the primary param (VIP agent referral links)
-    // ?scheduler= kept for backwards compat
+    // ?vip= is the primary VIP agent link param
+    // ?ref= and ?scheduler= kept for backwards compat
+    const vipSlug = searchParams.get("vip");
     const ref = searchParams.get("ref");
     const scheduler = searchParams.get("scheduler");
-    const id = ref || scheduler;
+    const id = vipSlug || ref || scheduler;
+
     if (id) {
       setSchedulerId(id);
     }
-  }, [searchParams, setSchedulerId]);
+
+    // Resolve VIP agent if ?vip= param present
+    if (vipSlug) {
+      import("@/data/vip-agents").then(({ getVIPBySlug }) => {
+        const vip = getVIPBySlug(vipSlug);
+        if (vip) {
+          setVIPAgent({
+            slug: vip.slug,
+            name: vip.name,
+            phone: vip.phone,
+            isnUserId: vip.isnUserId,
+          });
+        }
+      });
+    }
+  }, [searchParams, setSchedulerId, setVIPAgent]);
 
   return null;
 }

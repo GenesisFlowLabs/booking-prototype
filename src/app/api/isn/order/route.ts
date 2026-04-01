@@ -36,6 +36,12 @@ interface OrderRequestBody {
     quote: number;
   } | null;
   schedulerId: string | null;
+  vipAgent: {
+    slug: string;
+    name: string;
+    phone: string;
+    isnUserId: string;
+  } | null;
   referringAgent: {
     id: string | null;
     name: string;
@@ -54,7 +60,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { serviceType, packageTier, address, contact, property, selectedSlot, schedulerId, referringAgent } = body;
+  const { serviceType, packageTier, address, contact, property, selectedSlot, schedulerId, vipAgent, referringAgent } = body;
 
   // Validate required fields
   if (!address.street || !address.city || !address.state || !address.zip) {
@@ -71,12 +77,15 @@ export async function POST(req: NextRequest) {
   const clientName = `${contact.firstName} ${contact.lastName}`;
   const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation);
   let notesWithRef = notes;
+  if (vipAgent) {
+    notesWithRef = `${notesWithRef} | VIP Link: ${vipAgent.name} (${vipAgent.slug})`;
+  }
   if (referringAgent) {
     const agentLabel = referringAgent.isNew ? `NEW AGENT: ${referringAgent.name}` : `Agent: ${referringAgent.name}`;
     const agencyLabel = referringAgent.agency ? ` (${referringAgent.agency})` : "";
-    notesWithRef = `${notes} | ${agentLabel}${agencyLabel}`;
-  } else if (schedulerId) {
-    notesWithRef = `${notes} | Referred by agent link: ${schedulerId}`;
+    notesWithRef = `${notesWithRef} | ${agentLabel}${agencyLabel}`;
+  } else if (schedulerId && !vipAgent) {
+    notesWithRef = `${notesWithRef} | Referred by link: ${schedulerId}`;
   }
 
   const isnPayload: Record<string, unknown> = {
@@ -126,6 +135,24 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       );
     }
+
+    // Fire-and-forget: notify team via webhook endpoint
+    const notifyPayload = {
+      oid: result.oid,
+      address: `${address.street}, ${address.city}, ${address.state} ${address.zip}`,
+      client: clientName,
+      clientPhone: contact.phone,
+      clientEmail: contact.email,
+      vipAgent: vipAgent ? vipAgent.name : null,
+      vipSlug: vipAgent ? vipAgent.slug : schedulerId,
+      referringAgent: referringAgent ? referringAgent.name : null,
+      packageTier,
+    };
+    fetch(`${req.nextUrl.origin}/api/isn/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(notifyPayload),
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

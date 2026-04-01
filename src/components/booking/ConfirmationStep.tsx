@@ -102,7 +102,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function ConfirmationStep() {
-  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, referringAgent, prevStep, reset, setBookingSubmitted, submission, setSubmission } =
+  const { serviceType, address, selectedPackage, contact, property, selectedSlot, schedulerId, vipAgent, referringAgent, prevStep, reset, setBookingSubmitted, submission, setSubmission } =
     useBookingStore();
 
   const [submitted, setSubmitted] = useState(false);
@@ -141,6 +141,7 @@ export function ConfirmationStep() {
           property,
           selectedSlot,
           schedulerId,
+          vipAgent,
           referringAgent,
         }),
       });
@@ -314,6 +315,40 @@ export function ConfirmationStep() {
               <Download className="w-4 h-4" />
               Apple / Outlook (.ics)
             </button>
+          </motion.div>
+        )}
+
+        {/* Dedicated VIP Agent card */}
+        {vipAgent && vipAgent.phone && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mt-8 bg-gradient-to-r from-gw-green to-gw-green-light rounded-2xl p-6 max-w-md mx-auto text-white text-center shadow-lg"
+          >
+            <p className="text-sm text-white/70 uppercase tracking-wider font-semibold mb-2">Your Dedicated Agent</p>
+            <p className="text-2xl font-heading font-bold">{vipAgent.name}</p>
+            <p className="text-white/80 text-sm mt-1 mb-4">Ready to help with anything you need</p>
+            <a
+              href={`sms:${vipAgent.phone.replace(/\D/g, "")}&body=${encodeURIComponent(`Hi ${vipAgent.name.split(" ")[0]}, I just booked an inspection at ${address.street}, ${address.city} ${address.state} ${address.zip}. Name: ${contact.firstName} ${contact.lastName}.`)}`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-gw-green text-sm font-bold font-heading shadow-md hover:shadow-lg transition-all"
+            >
+              <Phone className="w-4 h-4" />
+              Text {vipAgent.name.split(" ")[0]} — {vipAgent.phone}
+            </a>
+            <p className="text-white/50 text-xs mt-3">Mon-Sat 7am-7pm CST</p>
+          </motion.div>
+        )}
+        {vipAgent && !vipAgent.phone && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mt-8 bg-gradient-to-r from-gw-green to-gw-green-light rounded-2xl p-6 max-w-md mx-auto text-white text-center shadow-lg"
+          >
+            <p className="text-sm text-white/70 uppercase tracking-wider font-semibold mb-2">Your Dedicated Agent</p>
+            <p className="text-2xl font-heading font-bold">{vipAgent.name}</p>
+            <p className="text-white/80 text-sm mt-2">We&apos;ll be in touch shortly to confirm your appointment.</p>
           </motion.div>
         )}
 

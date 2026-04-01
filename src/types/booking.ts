@@ -128,6 +128,13 @@ export interface ContactInfo {
 
 export type FoundationType = "slab" | "pier-beam" | "unknown";
 
+export interface VIPAgentInfo {
+  slug: string;
+  name: string;
+  phone: string;
+  isnUserId: string;
+}
+
 export interface ReferringAgent {
   id: string | null;
   name: string;
@@ -168,6 +175,7 @@ export interface BookingState {
 
   // Scheduler attribution (VIP link tracking)
   schedulerId: string | null;
+  vipAgent: VIPAgentInfo | null;
 
   // Submission state (hides step indicator on success screen)
   bookingSubmitted: boolean;
@@ -192,6 +200,7 @@ export interface BookingState {
   setSelectedSlot: (slot: SelectedSlot | null) => void;
   setSchedulerId: (id: string | null) => void;
   setBookingSubmitted: (submitted: boolean) => void;
+  setVIPAgent: (agent: VIPAgentInfo | null) => void;
   setReferringAgent: (agent: ReferringAgent | null) => void;
   setSubmission: (data: Partial<SubmissionState>) => void;
   reset: () => void;
