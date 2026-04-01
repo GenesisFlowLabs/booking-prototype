@@ -14,14 +14,27 @@ export interface VIPAgent {
   photoUrl?: string;      // Optional headshot
 }
 
-// --- JORDAN: Fill in the phone numbers (AirCall/Haymarket) ---
 export const vipAgents: VIPAgent[] = [
+  {
+    slug: "jake",
+    name: "Jake Johnson",
+    isnUserId: "",
+    email: "",
+    phone: "(469) 833-3366",
+  },
   {
     slug: "gaby",
     name: "Gaby Vasquez",
     isnUserId: "0072daa1-efff-4a6a-8dd5-ba22ac009c6b",
     email: "cindy.vasquez@greenworksinspections.com",
-    phone: "",  // TODO: Jordan to provide AirCall/Haymarket number
+    phone: "(214) 537-6103",
+  },
+  {
+    slug: "hannah",
+    name: "Hannah Carter",
+    isnUserId: "",
+    email: "",
+    phone: "(469) 972-7076",
   },
   {
     slug: "jordan",
@@ -30,13 +43,13 @@ export const vipAgents: VIPAgent[] = [
     email: "jordan.vanover@GreenWorksInspections.com",
     phone: "(405) 662-9777",
   },
-  // TODO: Jordan to provide the rest of his active team members
+  // Matt - no Haymarket number yet
   // {
-  //   slug: "jake",
-  //   name: "Jake ???",
-  //   isnUserId: "???",
-  //   email: "???@greenworksinspections.com",
-  //   phone: "",  // AirCall/Haymarket number
+  //   slug: "matt",
+  //   name: "Matt ???",
+  //   isnUserId: "",
+  //   email: "",
+  //   phone: "",
   // },
 ];
 
