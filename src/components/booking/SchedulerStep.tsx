@@ -18,26 +18,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ISNTimeSlot, SelectedSlot } from "@/types/booking";
 import { homePackages, ncPackages } from "@/data/packages";
 import { getISNMarketTags } from "@/data/service-areas";
+import { formatTime, formatInspectorName } from "@/lib/format";
 
 interface AvailabilityData {
   slots: ISNTimeSlot[];
   byDate: Record<string, ISNTimeSlot[]>;
-}
-
-function formatTime(datetime: string): string {
-  const time = datetime.split(" ")[1];
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${h12}:${m} ${ampm}`;
-}
-
-function formatInspectorName(name: string): string {
-  // "Troy Cunningham, CPI DFW IT1" -> "Troy C."
-  const parts = name.split(",")[0].split(" ");
-  if (parts.length >= 2) return `${parts[0]} ${parts[1][0]}.`;
-  return parts[0];
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

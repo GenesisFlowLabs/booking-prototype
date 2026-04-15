@@ -5,3 +5,9 @@ node_modules
 .env.local
 .env*.local
 out/
+
+# Internal docs (kept locally, not in repo)
+PICKUP.md
+JOURNEY-*.md
+ISN-API-RESEARCH.md
+docs/

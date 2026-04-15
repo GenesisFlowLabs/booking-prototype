@@ -9,12 +9,23 @@ import { serviceAreas } from "@/data/service-areas";
 import { ArrowRight, ArrowLeft, MapPin, CheckCircle2, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// TODO: Re-enable Google Places autocomplete once API billing is confirmed
-// import { useGooglePlaces } from "@/hooks/useGooglePlaces";
+import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 
 export function AddressStep() {
   const { address, setAddress, isValidZip, setZipValid, nextStep, prevStep } =
     useBookingStore();
+
+  const { suggestions, isOpen, search, select, close, containerRef } = useGooglePlaces(
+    (result) => {
+      setAddress({
+        street: result.street,
+        city: result.city,
+        state: result.state,
+        zip: result.zip,
+      });
+      close();
+    }
+  );
 
   // Validate zip as user types
   useEffect(() => {
@@ -46,13 +57,32 @@ export function AddressStep() {
       </div>
 
       <div className="space-y-4 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
-        <Input
-          label="Street Address"
-          value={address.street}
-          onChange={(v) => setAddress({ street: v })}
-          placeholder="123 Main Street"
-          required
-        />
+        <div ref={containerRef} className="relative">
+          <Input
+            label="Street Address"
+            value={address.street}
+            onChange={(v) => {
+              setAddress({ street: v });
+              search(v);
+            }}
+            placeholder="123 Main Street"
+            required
+          />
+          {isOpen && suggestions.length > 0 && (
+            <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+              {suggestions.map((s) => (
+                <button
+                  key={s.placeId}
+                  onClick={() => select(s.placeId)}
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gw-green/5 transition-colors border-b border-gray-50 last:border-0"
+                >
+                  <MapPin className="w-3.5 h-3.5 inline mr-2 text-gray-400" />
+                  {s.description}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <Input

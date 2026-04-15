@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notificationEmails } from "@/data/vip-agents";
+import { verifyInternalRequest } from "@/lib/webhook-auth";
+import { sendEmail } from "@/lib/email";
 
 interface NotifyPayload {
   oid: number;
@@ -14,6 +16,12 @@ interface NotifyPayload {
 }
 
 export async function POST(req: NextRequest) {
+  // Verify this is an internal request
+  if (!verifyInternalRequest(req)) {
+    console.warn("[Team Notify] Rejected — invalid or missing internal secret");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let payload: NotifyPayload;
   try {
     payload = await req.json();
@@ -29,7 +37,7 @@ export async function POST(req: NextRequest) {
   const pkgLine = packageTier || "No package selected";
 
   const subject = `New Booking - OID ${oid} - ${address}`;
-  const body = [
+  const textBody = [
     `New online booking received!`,
     ``,
     `OID: ${oid}`,
@@ -46,20 +54,19 @@ export async function POST(req: NextRequest) {
 
   // Log the notification
   console.log(`[Team Notify] ${subject}`);
-  console.log(`[Team Notify] Recipients: ${notificationEmails.join(", ")}`);
-  console.log(`[Team Notify] Body:\n${body}`);
 
-  // Send email notifications to the team
-  // Using a simple fetch to an email API or SMTP relay
-  // For now, log + use the ISN webhook to handle downstream
-  // TODO: Wire to Twilio SMS or SMTP for real email delivery
-  // For now this logs everything so we can verify it works
+  // Send email if we have recipients
+  if (notificationEmails.length > 0) {
+    const result = await sendEmail({
+      to: notificationEmails,
+      subject,
+      text: textBody,
+    });
 
-  // If we have notification emails configured, we could send via:
-  // 1. Twilio SendGrid
-  // 2. Direct SMTP
-  // 3. A GFL internal API
-  // Leaving as log-only until we wire up the email provider
+    if (!result.success) {
+      console.error(`[Team Notify] Email failed: ${result.error}`);
+    }
+  }
 
   return NextResponse.json({
     notified: true,

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyISNWebhook } from "@/lib/webhook-auth";
 
 export async function POST(req: NextRequest) {
+  // Verify webhook authenticity
+  if (!verifyISNWebhook(req)) {
+    console.warn("[ISN Webhook] Rejected — invalid or missing webhook secret");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let payload: Record<string, unknown>;
   try {
     payload = await req.json();
@@ -8,22 +15,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // ISN webhook payload uses "action" field with SCREAMING_SNAKE values:
-  //   ORDER_CREATED, ORDER_UPDATED, ORDER_COMPLETED, ORDER_SCHEDULED
-  // Also includes: order_id, oid, client_first, client_last, client_email,
-  //   client_mobile, address, inspector, fees, datetime, etc.
   const action = payload.action as string | undefined;
   const orderId = payload.order_id as string | undefined;
   const oid = payload.oid as number | undefined;
   const clientName = `${payload.client_first || ""} ${payload.client_last || ""}`.trim();
   const address = payload.address as string | undefined;
 
-  console.log(`[ISN Webhook] action=${action} oid=${oid} client=${clientName} address=${address}`);
+  console.log(`[ISN Webhook] action=${action} oid=${oid} orderId=${orderId} client=${clientName} address=${address}`);
 
   switch (action) {
     case "ORDER_CREATED":
       console.log(`[ISN Webhook] Order ${oid} created - ${clientName} at ${address}`);
-      // Future: trigger SMS confirmation via Twilio/AirCall
+      // Future: trigger SMS confirmation via Twilio
       break;
 
     case "ORDER_SCHEDULED":

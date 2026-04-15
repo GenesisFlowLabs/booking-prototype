@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isnPost } from "@/lib/isn";
-import { buildOrderNotes } from "@/lib/isn-mappings";
+import { buildOrderNotes, getISNOrderTypeId } from "@/lib/isn-mappings";
 import type {
   ISNCreateOrderResponse,
   ServiceType,
   PackageTier,
   ContactRole,
 } from "@/types/booking";
+
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || "";
 
 interface OrderRequestBody {
   serviceType: ServiceType;
@@ -88,6 +90,9 @@ export async function POST(req: NextRequest) {
     notesWithRef = `${notesWithRef} | Referred by link: ${schedulerId}`;
   }
 
+  // Resolve ISN order type UUID for this service/package combination
+  const orderTypeId = getISNOrderTypeId(serviceType, packageTier);
+
   const isnPayload: Record<string, unknown> = {
     datetime: selectedSlot.start,
     address: address.street,
@@ -100,6 +105,7 @@ export async function POST(req: NextRequest) {
       mobile: contact.phone || undefined,
     },
     inspectorId: selectedSlot.inspectorId,
+    orderType: orderTypeId,
     notes: notesWithRef,
     fee: selectedSlot.quote,
     area: property.sqft || undefined,
@@ -150,7 +156,10 @@ export async function POST(req: NextRequest) {
     };
     fetch(`${req.nextUrl.origin}/api/isn/notify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(INTERNAL_SECRET ? { "x-internal-secret": INTERNAL_SECRET } : {}),
+      },
       body: JSON.stringify(notifyPayload),
     }).catch(() => {});
 

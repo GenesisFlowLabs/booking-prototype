@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isnFetch, type ISNSlot } from "@/lib/isn";
+import { cacheGet, cacheSet } from "@/lib/cache";
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -11,6 +14,14 @@ export async function GET(req: NextRequest) {
       { error: "start and end date params required (YYYY-MM-DD)" },
       { status: 400 }
     );
+  }
+
+  const cacheKey = `availability:${start}:${end}`;
+
+  // Check cache first
+  const cached = cacheGet<{ slots: ISNSlot[]; byDate: Record<string, ISNSlot[]> }>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
   }
 
   try {
@@ -30,7 +41,12 @@ export async function GET(req: NextRequest) {
       byDate[date].push(slot);
     }
 
-    return NextResponse.json({ slots, byDate });
+    const result = { slots, byDate };
+
+    // Cache the result
+    cacheSet(cacheKey, result, CACHE_TTL_MS);
+
+    return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("ISN availability error:", message);

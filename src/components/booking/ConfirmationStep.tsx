@@ -25,21 +25,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-function formatTime(datetime: string): string {
-  const time = datetime.split(" ")[1];
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${h12}:${m} ${ampm}`;
-}
-
-function formatInspectorName(name: string): string {
-  const parts = name.split(",")[0].split(" ");
-  if (parts.length >= 2) return `${parts[0]} ${parts[1][0]}.`;
-  return parts[0];
-}
+import { formatTime, formatInspectorName } from "@/lib/format";
 
 function toICSDate(datetime: string): string {
   // datetime format: "2026-03-15 09:00:00" → "20260315T090000"

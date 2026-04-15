@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { BookingState, SubmissionState } from "@/types/booking";
 
 const TOTAL_STEPS = 5;
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours — stale sessions auto-clear
 
 const initialContact = {
   role: null as BookingState["contact"]["role"],
@@ -97,11 +98,33 @@ export const useBookingStore = create<BookingState>()(
         }),
     }),
     {
-      name: "gw-booking-v3",
+      name: "gw-booking-v4",
       partialize: (state) => ({
-        // Only persist the agent referral link — form data resets each visit
+        // Persist form progress so users can resume after accidental refresh
+        currentStep: state.currentStep,
+        serviceType: state.serviceType,
+        address: state.address,
+        isValidZip: state.isValidZip,
+        selectedPackage: state.selectedPackage,
+        contact: state.contact,
+        property: state.property,
+        selectedSlot: state.selectedSlot,
         schedulerId: state.schedulerId,
+        vipAgent: state.vipAgent,
+        referringAgent: state.referringAgent,
+        // Don't persist: submission state, bookingSubmitted, callbacks
+        _savedAt: Date.now(),
       }),
+      onRehydrateStorage: () => {
+        return (state) => {
+          if (!state) return;
+          // Clear stale sessions (older than 2 hours)
+          const savedAt = (state as unknown as { _savedAt?: number })._savedAt;
+          if (savedAt && Date.now() - savedAt > SESSION_TTL_MS) {
+            state.reset();
+          }
+        };
+      },
     }
   )
 );
