@@ -55,10 +55,14 @@ export function buildOrderNotes(
   packageTier: PackageTier | null,
   sqft: string,
   contactRole: string | null,
-  foundation?: string
+  foundation?: string,
+  preferredAppointment?: string
 ): string {
   const parts: string[] = [];
   parts.push("Booked via GreenWorks Online Scheduler");
+  if (preferredAppointment) {
+    parts.push(`Preferred: ${preferredAppointment}`);
+  }
   if (packageTier) {
     parts.push(`Package: ${ISN_PACKAGE_NAMES[packageTier] || packageTier}`);
   }

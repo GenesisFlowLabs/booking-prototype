@@ -98,7 +98,7 @@ export const useBookingStore = create<BookingState>()(
         }),
     }),
     {
-      name: "gw-booking-v4",
+      name: "gw-booking-v5",
       partialize: (state) => ({
         // Persist form progress so users can resume after accidental refresh
         currentStep: state.currentStep,

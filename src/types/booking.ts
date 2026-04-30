@@ -67,13 +67,13 @@ export interface ISNTimeSlot {
   quote: number;
 }
 
+export type PreferredTime = "09:30" | "14:30";
+
+// Preferred appointment — date + 9:30 AM or 2:30 PM Central. NOT a confirmed
+// slot. Order lands in ISN as unscheduled; GreenWorks confirms manually.
 export interface SelectedSlot {
   date: string;
-  start: string;
-  end: string;
-  inspectorId: string;
-  inspectorName: string;
-  quote: number;
+  preferredTime: PreferredTime;
 }
 
 // --- ISN Order Submission Types ---

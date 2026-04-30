@@ -266,10 +266,10 @@ export function ConfirmationStep() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
-                    {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                    {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatTime(selectedSlot.start)} - {formatTime(selectedSlot.end)} &middot; {formatInspectorName(selectedSlot.inspectorName)}
+                    {selectedSlot.preferredTime === "09:30" ? "9:30 AM" : "2:30 PM"} Central Standard Time (preferred)
                   </p>
                 </div>
               </div>
@@ -277,32 +277,8 @@ export function ConfirmationStep() {
           </div>
         </motion.div>
 
-        {/* Add to calendar */}
-        {selectedSlot && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3"
-          >
-            <a
-              href={buildGoogleCalendarUrl(calTitle, selectedSlot.start, selectedSlot.end, loc, calDesc)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gw-green text-white text-sm font-semibold font-heading shadow-lg shadow-gw-green/25 hover:bg-gw-green-light transition-colors"
-            >
-              <CalendarPlus className="w-4 h-4" />
-              Add to Google Calendar
-            </a>
-            <button
-              onClick={() => downloadICS(buildICSFile(calTitle, selectedSlot.start, selectedSlot.end, loc, calDesc), "greenworks-inspection.ics")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-gray-200 text-gray-700 text-sm font-semibold font-heading hover:border-gw-green hover:text-gw-green transition-colors cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              Apple / Outlook (.ics)
-            </button>
-          </motion.div>
-        )}
+        {/* Calendar invite intentionally hidden — ISN's confirmation email
+            will deliver the real invite after the team confirms the time. */}
 
         {/* Dedicated VIP Agent card */}
         {vipAgent && vipAgent.phone && (
@@ -518,7 +494,7 @@ export function ConfirmationStep() {
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium">APPOINTMENT</p>
+              <p className="text-xs text-gray-400 font-medium">PREFERRED APPOINTMENT</p>
               <p className="font-semibold text-gray-900">
                 {new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", {
                   weekday: "long",
@@ -528,7 +504,7 @@ export function ConfirmationStep() {
                 })}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {formatTime(selectedSlot.start)} – {formatTime(selectedSlot.end)} &middot; Inspector: {formatInspectorName(selectedSlot.inspectorName)}
+                {selectedSlot.preferredTime === "09:30" ? "9:30 AM" : "2:30 PM"} Central Standard Time &middot; we&apos;ll confirm shortly
               </p>
             </div>
           </div>

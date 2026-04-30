@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isnPost } from "@/lib/isn";
 import { buildOrderNotes, getISNOrderTypeId } from "@/lib/isn-mappings";
+import { homePackages, ncPackages } from "@/data/packages";
 import type {
   ISNCreateOrderResponse,
   ServiceType,
   PackageTier,
   ContactRole,
 } from "@/types/booking";
+
+// GreenWorks default inspector — order lands assigned here; team reassigns
+// to the actual on-call inspector after manual review in ISN.
+const DEFAULT_INSPECTOR_UUID = "da617ac2-5530-4d17-8744-e65fc480ff0c";
 
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || "";
 
@@ -31,11 +36,8 @@ interface OrderRequestBody {
     foundation: string;
   };
   selectedSlot: {
-    start: string;
-    end: string;
-    inspectorId: string;
-    inspectorName: string;
-    quote: number;
+    date: string;
+    preferredTime: "09:30" | "14:30";
   } | null;
   schedulerId: string | null;
   vipAgent: {
@@ -71,13 +73,26 @@ export async function POST(req: NextRequest) {
   if (!contact.firstName || !contact.lastName) {
     return NextResponse.json({ error: "Contact name required" }, { status: 400 });
   }
-  if (!selectedSlot) {
-    return NextResponse.json({ error: "Selected time slot required" }, { status: 400 });
+  if (!selectedSlot || !selectedSlot.date || !selectedSlot.preferredTime) {
+    return NextResponse.json({ error: "Preferred date and time required" }, { status: 400 });
   }
 
   // Build ISN order payload
   const clientName = `${contact.firstName} ${contact.lastName}`;
-  const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation);
+
+  // Format preferred appointment for ISN notes and the payload datetime field
+  const timeLabel = selectedSlot.preferredTime === "09:30" ? "9:30 AM CT" : "2:30 PM CT";
+  const dateLabel = new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+  const preferredAppointment = `${dateLabel} at ${timeLabel} (pending confirmation)`;
+  const timeOfDay = selectedSlot.preferredTime === "09:30" ? "09:30:00" : "14:30:00";
+  const datetime = `${selectedSlot.date} ${timeOfDay}`;
+
+  // Look up package starting price for the fee field
+  const pkg = packageTier ? [...homePackages, ...ncPackages].find((p) => p.id === packageTier) : null;
+
+  const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation, preferredAppointment);
   let notesWithRef = notes;
   if (vipAgent) {
     notesWithRef = `${notesWithRef} | VIP Link: ${vipAgent.name} (${vipAgent.slug})`;
@@ -94,7 +109,7 @@ export async function POST(req: NextRequest) {
   const orderTypeId = getISNOrderTypeId(serviceType, packageTier);
 
   const isnPayload: Record<string, unknown> = {
-    datetime: selectedSlot.start,
+    datetime,
     address: address.street,
     city: address.city,
     state: address.state,
@@ -104,10 +119,10 @@ export async function POST(req: NextRequest) {
       email: contact.email || undefined,
       mobile: contact.phone || undefined,
     },
-    inspectorId: selectedSlot.inspectorId,
+    inspectorId: DEFAULT_INSPECTOR_UUID,
     orderType: orderTypeId,
     notes: notesWithRef,
-    fee: selectedSlot.quote,
+    fee: pkg?.price,
     area: property.sqft || undefined,
   };
 
