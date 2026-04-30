@@ -110,19 +110,27 @@ export async function POST(req: NextRequest) {
 
   const isnPayload: Record<string, unknown> = {
     datetime,
+    address1: address.street,
     address: address.street,
     city: address.city,
     state: address.state,
+    zip: address.zip,
     postal: address.zip,
     client: {
       name: clientName,
       email: contact.email || undefined,
       mobile: contact.phone || undefined,
     },
+    inspector1uuid: DEFAULT_INSPECTOR_UUID,
     inspectorId: DEFAULT_INSPECTOR_UUID,
+    ordertypeuuid: orderTypeId,
     orderType: orderTypeId,
+    cs2appointmentnote: notesWithRef,
+    cs2clientnote: notesWithRef,
     notes: notesWithRef,
+    salesprice: pkg?.price,
     fee: pkg?.price,
+    squarefeet: property.sqft || undefined,
     area: property.sqft || undefined,
   };
 
