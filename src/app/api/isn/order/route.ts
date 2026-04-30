@@ -108,55 +108,42 @@ export async function POST(req: NextRequest) {
   // Resolve ISN order type UUID for this service/package combination
   const orderTypeId = getISNOrderTypeId(serviceType, packageTier);
 
+  const foundationLabels: Record<string, string> = {
+    slab: "Slab",
+    "pier-beam": "Pier & Beam",
+  };
+
   const isnPayload: Record<string, unknown> = {
     datetime,
     address1: address.street,
-    address: address.street,
     city: address.city,
     state: address.state,
     zip: address.zip,
-    postal: address.zip,
-    client: {
+    client: [{
       name: clientName,
       email: contact.email || undefined,
       mobile: contact.phone || undefined,
-    },
+    }],
     inspector1uuid: DEFAULT_INSPECTOR_UUID,
-    inspectorId: DEFAULT_INSPECTOR_UUID,
     ordertypeuuid: orderTypeId,
-    orderType: orderTypeId,
     cs2appointmentnote: notesWithRef,
     cs2clientnote: notesWithRef,
-    notes: notesWithRef,
     salesprice: pkg?.price,
-    fee: pkg?.price,
+    donotcalculateservicefees: true,
     squarefeet: property.sqft || undefined,
-    area: property.sqft || undefined,
+    ...(property.foundation && property.foundation !== "unknown" && {
+      foundationtype: foundationLabels[property.foundation] || property.foundation,
+    }),
   };
 
-  // Set agent field from referral or if contact is a buyer's agent
-  if (referringAgent && referringAgent.id) {
-    // Known ISN agent — pass their ID
-    isnPayload.agentId = referringAgent.id;
-  } else if (referringAgent && referringAgent.name) {
-    // New agent — pass name/contact info
-    isnPayload.agent = {
-      name: referringAgent.name,
-      email: referringAgent.email || undefined,
-      mobile: referringAgent.phone || undefined,
-    };
-  } else if (contact.role === "agent") {
-    // Contact IS the agent
-    isnPayload.agent = {
-      name: clientName,
-      email: contact.email || undefined,
-      mobile: contact.phone || undefined,
-    };
+  // Known ISN agent — link by UUID (new/unknown agents are captured in notes)
+  if (referringAgent?.id) {
+    isnPayload.buyersagentuuid = referringAgent.id;
   }
 
   console.log("[ISN Order] Submitting payload:", JSON.stringify({
     ...isnPayload,
-    client: { ...((isnPayload.client as Record<string, unknown>) || {}), email: isnPayload.client ? "[redacted]" : undefined },
+    client: "[redacted]",
   }));
 
   try {

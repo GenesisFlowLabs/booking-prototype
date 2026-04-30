@@ -44,8 +44,18 @@ export const useBookingStore = create<BookingState>()(
       },
 
       setStep: (step) => set({ currentStep: step }),
-      nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, TOTAL_STEPS) })),
-      prevStep: () => set((s) => ({ currentStep: Math.max(s.currentStep - 1, 1) })),
+      nextStep: () => set((s) => {
+        const hasPackages = s.serviceType === "home" || s.serviceType === "new-construction";
+        let next = s.currentStep + 1;
+        if (!hasPackages && next === 3) next++; // skip PackageStep
+        return { currentStep: Math.min(next, TOTAL_STEPS) };
+      }),
+      prevStep: () => set((s) => {
+        const hasPackages = s.serviceType === "home" || s.serviceType === "new-construction";
+        let prev = s.currentStep - 1;
+        if (!hasPackages && prev === 3) prev--; // skip PackageStep
+        return { currentStep: Math.max(prev, 1) };
+      }),
       setServiceType: (type) => set((s) => ({
         serviceType: type,
         // Clear package selection when switching service types (different tier IDs)
