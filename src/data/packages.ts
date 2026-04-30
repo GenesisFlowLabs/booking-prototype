@@ -68,7 +68,7 @@ export const homePackages: Package[] = [
     price: 545,
     priceNote: "starting at",
     serviceType: "home",
-    isnOrderTypeId: "ba4905c0-6b47-11ed-9e48-0a4ef934752f",
+    isnOrderTypeId: "8c23e18e-35bd-458b-a6b0-d0bbb2f7ca6c",
     features: [
       "Licensed Professional Home Inspection",
       "Infrared Thermal Imaging",
@@ -94,7 +94,7 @@ export const homePackages: Package[] = [
     priceNote: "starting at",
     popular: true,
     serviceType: "home",
-    isnOrderTypeId: "ba4905c0-6b47-11ed-9e48-0a4ef934752f",
+    isnOrderTypeId: "0a43331b-421a-4db8-9e31-299d30f492cd",
     features: [
       "Everything in Green, plus:",
       "Sewer Line Inspection",
@@ -109,7 +109,7 @@ export const homePackages: Package[] = [
     price: 1295,
     priceNote: "starting at",
     serviceType: "home",
-    isnOrderTypeId: "ba4905c0-6b47-11ed-9e48-0a4ef934752f",
+    isnOrderTypeId: "6946b600-13e0-4b51-81bd-0d1e9a204e5b",
     features: [
       "Everything in Greener, plus:",
       "3D Floor Plan",
@@ -129,7 +129,7 @@ export const ncPackages: Package[] = [
     price: 725,
     priceNote: "any size home",
     serviceType: "new-construction",
-    isnOrderTypeId: "38702513-e5e3-4d23-a997-e6eb1490edcd",
+    isnOrderTypeId: "dca7b45f-f6c8-4319-8e09-ab97e7b7035b",
     features: [
       "Final Pre-Closing",
       "Infrared Thermal Imaging",
@@ -151,7 +151,7 @@ export const ncPackages: Package[] = [
     priceNote: "any size home",
     popular: true,
     serviceType: "new-construction",
-    isnOrderTypeId: "cd5197d0-a2cd-4077-bd65-9066f4426d20",
+    isnOrderTypeId: "9fdd5aa5-7249-432c-a910-c35334309fa2",
     features: [
       "Everything in Core Check, plus:",
       "Pre-Drywall Inspection",
@@ -165,7 +165,7 @@ export const ncPackages: Package[] = [
     price: 1695,
     priceNote: "any size home",
     serviceType: "new-construction",
-    isnOrderTypeId: "04d2cee9-bd44-4c55-abd8-f61389e65e39",
+    isnOrderTypeId: "e316088b-a198-4416-b1d9-15a0e3519efd",
     features: [
       "Everything in Build Phase, plus:",
       "1 Repair Verification Inspection",
