@@ -146,8 +146,15 @@ export async function POST(req: NextRequest) {
     };
   }
 
+  console.log("[ISN Order] Submitting payload:", JSON.stringify({
+    ...isnPayload,
+    client: { ...((isnPayload.client as Record<string, unknown>) || {}), email: isnPayload.client ? "[redacted]" : undefined },
+  }));
+
   try {
     const result = await isnPost<ISNCreateOrderResponse>("/order", isnPayload);
+
+    console.log("[ISN Order] Response:", JSON.stringify(result));
 
     if (result.status === "error") {
       console.error("ISN order creation failed:", result);
