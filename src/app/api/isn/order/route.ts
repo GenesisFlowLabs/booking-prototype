@@ -126,8 +126,6 @@ export async function POST(req: NextRequest) {
     }],
     inspector1uuid: DEFAULT_INSPECTOR_UUID,
     ordertypeuuid: orderTypeId,
-    cs2appointmentnote: notesWithRef,
-    cs2clientnote: notesWithRef,
     salesprice: pkg?.price,
     donotcalculateservicefees: true,
     squarefeet: property.sqft || undefined,
@@ -136,7 +134,30 @@ export async function POST(req: NextRequest) {
     }),
   };
 
-  // Known ISN agent — link by UUID (new/unknown agents are captured in notes)
+  // Populate GreenWorks-specific custom controls (verified via withallcontrols=true).
+  // Control IDs are tenant-specific integers, NOT the cs2*note schema fields
+  // (those don't store anything in this tenant — verified empirically against order #237888).
+  const controlsV2: Array<{ id: string; value: string }> = [
+    { id: "480", value: notesWithRef }, // "Project Notes from Client" — the visible Notes field
+  ];
+
+  // Engineering orders also require Engineering Notes (id=120) per ISN order requirements
+  if (serviceType === "engineering") {
+    controlsV2.push({ id: "120", value: notesWithRef });
+  }
+
+  if (referringAgent?.name) {
+    const agentLabel = referringAgent.agency
+      ? `${referringAgent.name} (${referringAgent.agency})`
+      : referringAgent.name;
+    controlsV2.push({ id: "720", value: agentLabel }); // "Who were you referred by?"
+  } else if (vipAgent) {
+    controlsV2.push({ id: "720", value: `${vipAgent.name} (VIP link: ${vipAgent.slug})` });
+  }
+
+  isnPayload["controls-v2"] = controlsV2;
+
+  // Known ISN agent — link by UUID (new/unknown agents are captured in notes + control 720)
   if (referringAgent?.id) {
     isnPayload.buyersagentuuid = referringAgent.id;
   }
