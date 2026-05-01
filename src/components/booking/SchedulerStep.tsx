@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useBookingStore } from "@/store/booking";
 import { Button } from "@/components/ui/Button";
 import {
@@ -10,20 +10,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Loader2,
-  RefreshCw,
+  Info,
   Phone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ISNTimeSlot, SelectedSlot } from "@/types/booking";
+import type { PreferredTime } from "@/types/booking";
 import { homePackages, ncPackages } from "@/data/packages";
-import { getISNMarketTags } from "@/data/service-areas";
-import { formatTime, formatInspectorName } from "@/lib/format";
-
-interface AvailabilityData {
-  slots: ISNTimeSlot[];
-  byDate: Record<string, ISNTimeSlot[]>;
-}
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -31,31 +23,25 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-// Filter slots to only show inspectors matching the user's market
-function filterSlotsByMarket(
-  slots: ISNTimeSlot[],
-  marketTags: string[] | null
-): ISNTimeSlot[] {
-  if (!marketTags) return slots; // No filter if we can't determine market
-  return slots
-    .map((slot) => {
-      const matchingInspectors = slot.inspectors.filter((insp) =>
-        marketTags.some((tag) => insp.name.includes(tag))
-      );
-      if (matchingInspectors.length === 0) return null;
-      return { ...slot, inspectors: matchingInspectors };
-    })
-    .filter((s): s is ISNTimeSlot => s !== null);
+// GreenWorks works 7 days a week. These are the only fully-closed holidays.
+function isClosedHoliday(date: Date): boolean {
+  const m = date.getMonth();
+  const d = date.getDate();
+  // Jan 1 (NYD), Jul 4, Dec 25
+  return (m === 0 && d === 1) || (m === 6 && d === 4) || (m === 11 && d === 25);
 }
 
+const TIME_OPTIONS: { value: PreferredTime; display: string; subtitle: string }[] = [
+  { value: "09:30", display: "9:30 AM", subtitle: "Morning" },
+  { value: "14:30", display: "2:30 PM", subtitle: "Afternoon" },
+];
+
 export function SchedulerStep() {
-  const { nextStep, prevStep, selectedPackage, address, selectedSlot, setSelectedSlot, serviceType } =
+  const { nextStep, prevStep, selectedPackage, selectedSlot, setSelectedSlot } =
     useBookingStore();
 
   const allPackages = [...homePackages, ...ncPackages];
   const pkg = allPackages.find((p) => p.id === selectedPackage);
-
-  const marketTags = useMemo(() => getISNMarketTags(address.zip), [address.zip]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -64,50 +50,13 @@ export function SchedulerStep() {
   }, []);
 
   const continueRef = useRef<HTMLDivElement>(null);
-  const timeSlotsRef = useRef<HTMLDivElement>(null);
+  const timePickerRef = useRef<HTMLDivElement>(null);
 
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [availability, setAvailability] = useState<AvailabilityData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAvailability = useCallback(async (year: number, month: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      // ISN rejects past/today dates — use tomorrow as earliest start
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
-      const startDay = isCurrentMonth ? tomorrow.getDate() : 1;
-      const start = `${year}-${String(month + 1).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`;
-      const lastDay = new Date(year, month + 1, 0).getDate();
-      const end = `${year}-${String(month + 1).padStart(2, "0")}-${lastDay}`;
-      const res = await fetch(`/api/isn/availability?start=${start}&end=${end}`);
-      if (!res.ok) throw new Error("Failed to load availability");
-      const data: AvailabilityData = await res.json();
-      // Filter to user's market
-      const filteredSlots = filterSlotsByMarket(data.slots, marketTags);
-      const filteredByDate: Record<string, ISNTimeSlot[]> = {};
-      for (const slot of filteredSlots) {
-        const date = slot.start.split(" ")[0];
-        if (!filteredByDate[date]) filteredByDate[date] = [];
-        filteredByDate[date].push(slot);
-      }
-      setAvailability({ slots: filteredSlots, byDate: filteredByDate });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAvailability(viewYear, viewMonth);
-  }, [viewYear, viewMonth, fetchAvailability]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    selectedSlot?.date ?? null
+  );
 
   const navigateMonth = (dir: 1 | -1) => {
     let m = viewMonth + dir;
@@ -116,43 +65,22 @@ export function SchedulerStep() {
     if (m < 0) { m = 11; y--; }
     setViewMonth(m);
     setViewYear(y);
-    setSelectedDate(null);
   };
 
-  // Calendar grid
+  // Calendar grid math
   const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const availableDates = availability ? Object.keys(availability.byDate) : [];
-
-  const slotsForDate = selectedDate && availability?.byDate[selectedDate]
-    ? availability.byDate[selectedDate]
-    : [];
-
-  // Deduplicate slots: group by time, pick best inspector
-  const uniqueSlots = useMemo(() => {
-    const seen = new Map<string, ISNTimeSlot>();
-    for (const slot of slotsForDate) {
-      const key = `${slot.start}-${slot.end}`;
-      if (!seen.has(key)) {
-        seen.set(key, slot);
-      }
-    }
-    return Array.from(seen.values()).sort(
-      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-    );
-  }, [slotsForDate]);
-
-  // Auto-scroll to time slots when date is selected
+  // Auto-scroll to time picker when a date is selected
   useEffect(() => {
-    if (selectedDate && timeSlotsRef.current) {
+    if (selectedDate && timePickerRef.current) {
       setTimeout(() => {
-        timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        timePickerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 200);
     }
   }, [selectedDate]);
 
-  // Auto-scroll to Continue when slot is selected
+  // Auto-scroll to Continue when both date + time are picked
   useEffect(() => {
     if (selectedSlot && continueRef.current) {
       setTimeout(() => {
@@ -161,21 +89,22 @@ export function SchedulerStep() {
     }
   }, [selectedSlot]);
 
-  const handleSlotSelect = (slot: ISNTimeSlot) => {
-    const date = slot.start.split(" ")[0];
-    const inspector = slot.inspectors[0];
-    const selected: SelectedSlot = {
-      date,
-      start: slot.start,
-      end: slot.end,
-      inspectorId: inspector.id,
-      inspectorName: inspector.name,
-      quote: slot.quote,
-    };
-    setSelectedSlot(selected);
+  const handleDateClick = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    // Preserve previously chosen time if the user is just changing the date
+    if (selectedSlot?.preferredTime) {
+      setSelectedSlot({ date: dateStr, preferredTime: selectedSlot.preferredTime });
+    } else {
+      setSelectedSlot(null);
+    }
   };
 
-  const canProceed = selectedSlot !== null;
+  const handleTimeClick = (time: PreferredTime) => {
+    if (!selectedDate) return;
+    setSelectedSlot({ date: selectedDate, preferredTime: time });
+  };
+
+  const canProceed = !!selectedSlot;
   const isPastMonth =
     viewYear < today.getFullYear() ||
     (viewYear === today.getFullYear() && viewMonth < today.getMonth());
@@ -187,11 +116,10 @@ export function SchedulerStep() {
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
-          Pick your inspection date
+          Pick your preferred date and time
         </h2>
         <p className="text-gray-500 mt-2">
-          Select an available date and time. Our inspectors are available 7 days
-          a week.
+          Choose what works best — a team member will reach out shortly to confirm.
         </p>
       </div>
 
@@ -242,13 +170,7 @@ export function SchedulerStep() {
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1 relative">
-            {loading && (
-              <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-xl">
-                <Loader2 className="w-6 h-6 text-gw-green animate-spin" />
-              </div>
-            )}
-
+          <div className="grid grid-cols-7 gap-1">
             {/* Empty cells before first day */}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
@@ -257,40 +179,36 @@ export function SchedulerStep() {
             {/* Day cells */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
+              const cellDate = new Date(viewYear, viewMonth, day);
               const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const isAvailable = availableDates.includes(dateStr);
+              const isPast = cellDate < today;
+              const isHoliday = isClosedHoliday(cellDate);
+              const isAvailable = !isPast && !isHoliday;
               const isSelected = selectedDate === dateStr;
-              const isPast =
-                new Date(viewYear, viewMonth, day) < today;
               const isToday =
                 day === today.getDate() &&
                 viewMonth === today.getMonth() &&
                 viewYear === today.getFullYear();
-              const slotCount = availability?.byDate[dateStr]?.length ?? 0;
 
               return (
                 <button
                   key={day}
-                  onClick={() => isAvailable && !isPast && setSelectedDate(dateStr)}
-                  disabled={!isAvailable || isPast}
+                  onClick={() => isAvailable && handleDateClick(dateStr)}
+                  disabled={!isAvailable}
                   className={`
                     aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-medium
                     transition-all duration-200 relative
                     ${isPast ? "text-gray-300 cursor-not-allowed" : ""}
-                    ${isAvailable && !isPast && !isSelected ? "text-gray-900 hover:bg-gw-green/10 cursor-pointer" : ""}
-                    ${!isAvailable && !isPast ? "text-gray-300 cursor-not-allowed" : ""}
+                    ${isHoliday && !isPast ? "text-gray-300 cursor-not-allowed" : ""}
+                    ${isAvailable && !isSelected ? "text-gray-900 hover:bg-gw-green/10 cursor-pointer" : ""}
                     ${isSelected ? "bg-gw-green text-white shadow-lg shadow-gw-green/25 scale-105" : ""}
                     ${isToday && !isSelected ? "ring-2 ring-gw-green/30" : ""}
                   `}
                 >
                   <span className={isSelected ? "font-bold" : ""}>{day}</span>
-                  {isAvailable && !isPast && (
-                    <span
-                      className={`text-[9px] leading-none mt-0.5 ${
-                        isSelected ? "text-white/80" : "text-gw-green"
-                      }`}
-                    >
-                      {slotCount} {slotCount === 1 ? "slot" : "slots"}
+                  {isHoliday && !isPast && (
+                    <span className="text-[8px] leading-none mt-0.5 text-gray-400">
+                      Closed
                     </span>
                   )}
                 </button>
@@ -299,8 +217,8 @@ export function SchedulerStep() {
           </div>
         </div>
 
-        {/* Time slots panel */}
-        <div className="lg:col-span-2" ref={timeSlotsRef}>
+        {/* Time picker panel */}
+        <div className="lg:col-span-2" ref={timePickerRef}>
           <AnimatePresence mode="wait">
             {!selectedDate ? (
               <motion.div
@@ -312,9 +230,9 @@ export function SchedulerStep() {
               >
                 <Calendar className="w-10 h-10 text-gray-200 mb-3" />
                 <p className="text-sm text-gray-400 font-medium">
-                  Select a date to see
+                  Select a date to choose
                   <br />
-                  available time slots
+                  your preferred time
                 </p>
               </motion.div>
             ) : (
@@ -334,22 +252,18 @@ export function SchedulerStep() {
                   })}
                 </h4>
                 <p className="text-xs text-gray-400 mb-4">
-                  {uniqueSlots.length} time{uniqueSlots.length !== 1 ? "s" : ""}{" "}
-                  available
+                  Pick a preferred time
                 </p>
 
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                  {uniqueSlots.map((slot) => {
-                    const isChosen =
-                      selectedSlot?.start === slot.start &&
-                      selectedSlot?.end === slot.end;
-
+                <div className="space-y-2">
+                  {TIME_OPTIONS.map((opt) => {
+                    const isChosen = selectedSlot?.preferredTime === opt.value;
                     return (
                       <button
-                        key={`${slot.start}-${slot.end}`}
-                        onClick={() => handleSlotSelect(slot)}
+                        key={opt.value}
+                        onClick={() => handleTimeClick(opt.value)}
                         className={`
-                          w-full text-left p-3 rounded-xl border-2 transition-all duration-200
+                          w-full text-left p-4 rounded-xl border-2 transition-all duration-200
                           ${
                             isChosen
                               ? "border-gw-green bg-gw-green/5 shadow-sm"
@@ -358,15 +272,21 @@ export function SchedulerStep() {
                         `}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <Clock
-                              className={`w-4 h-4 ${
+                              className={`w-5 h-5 ${
                                 isChosen ? "text-gw-green" : "text-gray-400"
                               }`}
                             />
-                            <span className="font-semibold text-sm text-gray-900">
-                              {formatTime(slot.start)} – {formatTime(slot.end)}
-                            </span>
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {opt.display}
+                                <span className="text-xs text-gray-400 font-normal ml-1.5">
+                                  CT
+                                </span>
+                              </p>
+                              <p className="text-xs text-gray-500">{opt.subtitle}</p>
+                            </div>
                           </div>
                           {isChosen && (
                             <motion.div
@@ -390,33 +310,26 @@ export function SchedulerStep() {
                             </motion.div>
                           )}
                         </div>
-
-                        {/* Quote hidden per Jordan — pricing shown as ranges on package step */}
                       </button>
                     );
                   })}
                 </div>
+
+                {selectedSlot && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-3 rounded-xl bg-blue-50 border border-blue-100 flex gap-2"
+                  >
+                    <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      A team member will reach out shortly to confirm your appointment.
+                    </p>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Error state */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-center"
-            >
-              <p className="text-sm text-red-700 mb-2">{error}</p>
-              <button
-                onClick={() => fetchAvailability(viewYear, viewMonth)}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-700 hover:text-red-900"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Try again
-              </button>
-            </motion.div>
-          )}
 
           {/* Fallback call option */}
           <div className="mt-4 p-4 rounded-xl bg-warm-gray text-center">
@@ -452,8 +365,7 @@ export function SchedulerStep() {
                   )}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {formatTime(selectedSlot.start)} – {formatTime(selectedSlot.end)}{" "}
-                  &middot; {formatInspectorName(selectedSlot.inspectorName)}
+                  {selectedSlot.preferredTime === "09:30" ? "9:30 AM" : "2:30 PM"} Central Standard Time (preferred)
                 </p>
               </div>
               <button

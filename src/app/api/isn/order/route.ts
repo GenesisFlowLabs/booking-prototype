@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isnPost } from "@/lib/isn";
 import { buildOrderNotes, getISNOrderTypeId } from "@/lib/isn-mappings";
+import { homePackages, ncPackages } from "@/data/packages";
 import type {
   ISNCreateOrderResponse,
   ServiceType,
   PackageTier,
   ContactRole,
 } from "@/types/booking";
+
+// GreenWorks default inspector — order lands assigned here; team reassigns
+// to the actual on-call inspector after manual review in ISN.
+const DEFAULT_INSPECTOR_UUID = "da617ac2-5530-4d17-8744-e65fc480ff0c";
 
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || "";
 
@@ -31,11 +36,8 @@ interface OrderRequestBody {
     foundation: string;
   };
   selectedSlot: {
-    start: string;
-    end: string;
-    inspectorId: string;
-    inspectorName: string;
-    quote: number;
+    date: string;
+    preferredTime: "09:30" | "14:30";
   } | null;
   schedulerId: string | null;
   vipAgent: {
@@ -71,13 +73,26 @@ export async function POST(req: NextRequest) {
   if (!contact.firstName || !contact.lastName) {
     return NextResponse.json({ error: "Contact name required" }, { status: 400 });
   }
-  if (!selectedSlot) {
-    return NextResponse.json({ error: "Selected time slot required" }, { status: 400 });
+  if (!selectedSlot || !selectedSlot.date || !selectedSlot.preferredTime) {
+    return NextResponse.json({ error: "Preferred date and time required" }, { status: 400 });
   }
 
   // Build ISN order payload
   const clientName = `${contact.firstName} ${contact.lastName}`;
-  const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation);
+
+  // Format preferred appointment for ISN notes and the payload datetime field
+  const timeLabel = selectedSlot.preferredTime === "09:30" ? "9:30 AM CT" : "2:30 PM CT";
+  const dateLabel = new Date(selectedSlot.date + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+  const preferredAppointment = `${dateLabel} at ${timeLabel} (pending confirmation)`;
+  const timeOfDay = selectedSlot.preferredTime === "09:30" ? "09:30:00" : "14:30:00";
+  const datetime = `${selectedSlot.date} ${timeOfDay}`;
+
+  // Look up package starting price for the fee field
+  const pkg = packageTier ? [...homePackages, ...ncPackages].find((p) => p.id === packageTier) : null;
+
+  const notes = buildOrderNotes(packageTier, property.sqft, contact.role, property.foundation, preferredAppointment);
   let notesWithRef = notes;
   if (vipAgent) {
     notesWithRef = `${notesWithRef} | VIP Link: ${vipAgent.name} (${vipAgent.slug})`;
@@ -93,46 +108,69 @@ export async function POST(req: NextRequest) {
   // Resolve ISN order type UUID for this service/package combination
   const orderTypeId = getISNOrderTypeId(serviceType, packageTier);
 
-  const isnPayload: Record<string, unknown> = {
-    datetime: selectedSlot.start,
-    address: address.street,
-    city: address.city,
-    state: address.state,
-    postal: address.zip,
-    client: {
-      name: clientName,
-      email: contact.email || undefined,
-      mobile: contact.phone || undefined,
-    },
-    inspectorId: selectedSlot.inspectorId,
-    orderType: orderTypeId,
-    notes: notesWithRef,
-    fee: selectedSlot.quote,
-    area: property.sqft || undefined,
+  const foundationLabels: Record<string, string> = {
+    slab: "Slab",
+    "pier-beam": "Pier & Beam",
   };
 
-  // Set agent field from referral or if contact is a buyer's agent
-  if (referringAgent && referringAgent.id) {
-    // Known ISN agent — pass their ID
-    isnPayload.agentId = referringAgent.id;
-  } else if (referringAgent && referringAgent.name) {
-    // New agent — pass name/contact info
-    isnPayload.agent = {
-      name: referringAgent.name,
-      email: referringAgent.email || undefined,
-      mobile: referringAgent.phone || undefined,
-    };
-  } else if (contact.role === "agent") {
-    // Contact IS the agent
-    isnPayload.agent = {
+  const isnPayload: Record<string, unknown> = {
+    datetime,
+    address1: address.street,
+    city: address.city,
+    state: address.state,
+    zip: address.zip,
+    client: [{
       name: clientName,
       email: contact.email || undefined,
       mobile: contact.phone || undefined,
-    };
+    }],
+    inspector1uuid: DEFAULT_INSPECTOR_UUID,
+    ordertypeuuid: orderTypeId,
+    salesprice: pkg?.price,
+    donotcalculateservicefees: true,
+    squarefeet: property.sqft || undefined,
+    ...(property.foundation && property.foundation !== "unknown" && {
+      foundationtype: foundationLabels[property.foundation] || property.foundation,
+    }),
+  };
+
+  // Populate GreenWorks-specific custom controls (verified via withallcontrols=true).
+  // Control IDs are tenant-specific integers, NOT the cs2*note schema fields
+  // (those don't store anything in this tenant — verified empirically against order #237888).
+  const controlsV2: Array<{ id: string; value: string }> = [
+    { id: "480", value: notesWithRef }, // "Project Notes from Client" — the visible Notes field
+  ];
+
+  // Engineering orders also require Engineering Notes (id=120) per ISN order requirements
+  if (serviceType === "engineering") {
+    controlsV2.push({ id: "120", value: notesWithRef });
   }
+
+  if (referringAgent?.name) {
+    const agentLabel = referringAgent.agency
+      ? `${referringAgent.name} (${referringAgent.agency})`
+      : referringAgent.name;
+    controlsV2.push({ id: "720", value: agentLabel }); // "Who were you referred by?"
+  } else if (vipAgent) {
+    controlsV2.push({ id: "720", value: `${vipAgent.name} (VIP link: ${vipAgent.slug})` });
+  }
+
+  isnPayload["controls-v2"] = controlsV2;
+
+  // Known ISN agent — link by UUID (new/unknown agents are captured in notes + control 720)
+  if (referringAgent?.id) {
+    isnPayload.buyersagentuuid = referringAgent.id;
+  }
+
+  console.log("[ISN Order] Submitting payload:", JSON.stringify({
+    ...isnPayload,
+    client: "[redacted]",
+  }));
 
   try {
     const result = await isnPost<ISNCreateOrderResponse>("/order", isnPayload);
+
+    console.log("[ISN Order] Response:", JSON.stringify(result));
 
     if (result.status === "error") {
       console.error("ISN order creation failed:", result);
